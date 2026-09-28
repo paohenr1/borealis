@@ -1,0 +1,42 @@
+# Factor definitions. Every factor score is oriented so HIGHER = more attractive.
+# direction: how the raw metric maps to attractiveness.
+# missing: how missing/invalid values are handled (sector median imputation).
+# Sleeve weights set 2026-09-28 from the factor-efficacy lab + correlation/PCA
+# (reports/factor_efficacy_20260928.md, reports/factor_correlation_pca_20260928.md).
+# Metric-level recommendations (value consolidation, redundancy drops, size
+# orientation) target the Intrinio panel pipeline; see the reports.
+factors:
+  value:
+    weight: 0.20
+    description: "Cheap on earnings, sales, and growth-adjusted earnings"
+    metrics:
+      pe_ratio:  {direction: lower_better, missing: sector_median}
+      ps_ratio:  {direction: lower_better, missing: sector_median}
+      peg_ratio: {direction: lower_better, missing: sector_median}
+  quality:
+    weight: 0.40
+    description: "Profitable, cash-generative, conservatively financed (TODO: needs ROE/FCF data)"
+    metrics:
+      roe:            {direction: higher_better, missing: sector_median}
+      fcf_margin:     {direction: higher_better, missing: sector_median}
+      debt_to_equity: {direction: lower_better,  missing: sector_median}
+  growth:
+    weight: 0.05
+    description: "Trailing quarterly sales growth"
+    metrics:
+      sales_growth_q: {direction: higher_better, missing: sector_median}
+  momentum:
+    weight: 0.20
+    description: "Distance from 52-week low (trend proxy until trailing returns added)"
+    metrics:
+      pct_above_52w_low: {direction: higher_better, missing: sector_median}
+  lowvol:
+    weight: 0.15
+    description: "Lower trailing beta preferred"
+    metrics:
+      trailing_beta: {direction: lower_better, missing: sector_median}
+
+scoring:
+  winsorize_sigma: 3.0
+  neutralize_by: sector
+  rank_method: min   # rank 1 = most attractive within sector

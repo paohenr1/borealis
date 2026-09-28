@@ -1,0 +1,25 @@
+# ---- never publish: licensed / proprietary data ----
+data/raw/
+data/processed/intrinio/
+# regenerable snapshot output (derived from the licensed workbook)
+data/processed/scores.csv
+
+# ---- python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# ---- notebooks / IDE ----
+.ipynb_checkpoints/
+.idea/
+.vscode/
+*.swp
+
+# ---- os / secrets ----
+.DS_Store
+Thumbs.db
+.env
+.env.*

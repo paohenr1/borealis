@@ -1,0 +1,10 @@
+# Backtest parameters. Signals are ALWAYS lagged by signal_lag periods
+# before trading: a signal dated t can only drive positions from t+lag.
+backtest:
+  n_quantiles: 5
+  signal_lag: 1            # periods between signal date and trade date
+  rebalance_every: 21      # trading days between rebalances
+  cost_bps: 10.0           # one-way transaction cost in basis points
+  long_only: true
+  max_position_weight: 0.05
+  max_sector_weight: 0.30

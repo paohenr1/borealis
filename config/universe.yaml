@@ -1,0 +1,23 @@
+# Universe definition. Valuation ratios are currency-neutral, so CAD and USD
+# names can share a sector universe. Market-cap filters are currency-aware
+# and applied in loader, not here.
+asof: "2026-09-22"
+source_workbook: "data/raw/ranks_earnings_2026-09-22.xlsx"
+source_sheet: "UNIVERSE"
+
+sectors:
+  - consumer_discretionary
+  - consumer_staples
+  - energy
+  - financials
+  - health_care
+  - industrials
+  - materials
+  - real_estate
+  - technology
+  - telecommunication
+  - utilities
+
+# Optional hard filters (null = disabled)
+min_market_cap: null
+exclude_tickers: []

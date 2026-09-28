@@ -1,0 +1,2600 @@
+{
+ "meta": {
+  "generated": "2026-09-28T16:00:04+00:00",
+  "panel": "data/processed/intrinio/panel",
+  "n_dates": 81,
+  "n_date_matrices": 81,
+  "date_min": "2020-01-31",
+  "date_max": "2026-09-25",
+  "efficacy_json": "reports/factor_efficacy_20260928.json",
+  "scheme": [
+   "Rebalance dates: month-end trading days in the panel (81 dates, 2020-01-31 to 2026-09-25).",
+   "Factors oriented (higher = more attractive), zero/negative value ratios quarantined, winsorized at \u00b13\u03c3 and z-scored within (date, sector); 'unknown' sector kept as its own bucket.",
+   "Per-date Pearson correlation of z-scores (pairwise complete, min_periods=200; dates with <200 rows skipped), Fisher-z averaged back to correlation space; forced symmetric, unit diagonal.",
+   "PCA on the date-averaged correlation matrix (purely cross-sectional; pooled z-scores would let high-volatility dates dominate).",
+   "Redundancy: greedy clusters at |corr| \u2265 0.70; cluster keeper = highest |IC t-stat| from the efficacy lab (from reports/factor_efficacy_20260928.json)."
+  ],
+  "caveats": [
+   "Contemporaneous factor structure, not prediction: no lookahead issue exists here by construction (nothing at t is joined to information from after t).",
+   "37% of panel rows have sector 'unknown' (kept as its own neutralization bucket, not dropped).",
+   "Fundamentals cover ~5,880 of 22,569 tickers; small caps are largely price-only, so factor z-scores are NaN for them and pairwise-complete correlations lean on covered names.",
+   "Restated fundamental vintages embed later revisions (values, not availability) \u2014 inherited from the panel.",
+   "Average correlations smooth over regime changes; a single 2020-2026 mean can hide time-varying structure (e.g. the 2022 rate shock)."
+  ]
+ },
+ "corr": {
+  "pe": {
+   "pe": 1.0,
+   "pb": 0.3262,
+   "ps": 0.242,
+   "ev_ebitda": 0.4227,
+   "ev_ebit": 0.4904,
+   "ev_fcff": 0.204,
+   "earn_yield": 0.1222,
+   "roe": 0.043,
+   "roa": 0.1072,
+   "ebitda_margin": 0.0181,
+   "profit_margin": 0.034,
+   "fcf": -0.0059,
+   "bvps": 0.0137,
+   "asset_turnover": 0.0243,
+   "debt_ebitda": 0.0413,
+   "leverage": -0.0207,
+   "rev_growth": 0.0049,
+   "ebitda_growth": 0.0042,
+   "ebit_growth": 0.0142,
+   "div_yield": 0.0513,
+   "market_cap": 0.0805,
+   "enterprise_value": 0.0735
+  },
+  "pb": {
+   "pe": 0.3262,
+   "pb": 1.0,
+   "ps": 0.2514,
+   "ev_ebitda": 0.2459,
+   "ev_ebit": 0.202,
+   "ev_fcff": 0.1839,
+   "earn_yield": 0.0457,
+   "roe": 0.0847,
+   "roa": 0.0585,
+   "ebitda_margin": -0.0008,
+   "profit_margin": 0.0029,
+   "fcf": -0.0249,
+   "bvps": 0.0238,
+   "asset_turnover": -0.13,
+   "debt_ebitda": -0.016,
+   "leverage": 0.1178,
+   "rev_growth": -0.0079,
+   "ebitda_growth": -0.0056,
+   "ebit_growth": 0.0015,
+   "div_yield": 0.0373,
+   "market_cap": 0.1814,
+   "enterprise_value": 0.1604
+  },
+  "ps": {
+   "pe": 0.242,
+   "pb": 0.2514,
+   "ps": 1.0,
+   "ev_ebitda": 0.3423,
+   "ev_ebit": 0.2721,
+   "ev_fcff": 0.1837,
+   "earn_yield": 0.0518,
+   "roe": 0.04,
+   "roa": 0.1217,
+   "ebitda_margin": 0.6016,
+   "profit_margin": 0.5928,
+   "fcf": 0.0047,
+   "bvps": 0.0218,
+   "asset_turnover": 0.1242,
+   "debt_ebitda": -0.0215,
+   "leverage": -0.0325,
+   "rev_growth": -0.0029,
+   "ebitda_growth": 0.0278,
+   "ebit_growth": 0.0211,
+   "div_yield": 0.0449,
+   "market_cap": 0.0879,
+   "enterprise_value": 0.0881
+  },
+  "ev_ebitda": {
+   "pe": 0.4227,
+   "pb": 0.2459,
+   "ps": 0.3423,
+   "ev_ebitda": 1.0,
+   "ev_ebit": 0.61,
+   "ev_fcff": 0.2251,
+   "earn_yield": 0.087,
+   "roe": 0.0501,
+   "roa": 0.1058,
+   "ebitda_margin": 0.0432,
+   "profit_margin": 0.035,
+   "fcf": 0.0252,
+   "bvps": 0.0277,
+   "asset_turnover": 0.038,
+   "debt_ebitda": 0.5241,
+   "leverage": -0.0157,
+   "rev_growth": -0.0053,
+   "ebitda_growth": 0.0158,
+   "ebit_growth": 0.0648,
+   "div_yield": 0.0485,
+   "market_cap": 0.0832,
+   "enterprise_value": 0.0752
+  },
+  "ev_ebit": {
+   "pe": 0.4904,
+   "pb": 0.202,
+   "ps": 0.2721,
+   "ev_ebitda": 0.61,
+   "ev_ebit": 1.0,
+   "ev_fcff": 0.1876,
+   "earn_yield": 0.0888,
+   "roe": 0.0501,
+   "roa": 0.1217,
+   "ebitda_margin": 0.0277,
+   "profit_margin": 0.0208,
+   "fcf": 0.031,
+   "bvps": 0.0211,
+   "asset_turnover": 0.051,
+   "debt_ebitda": 0.2575,
+   "leverage": -0.02,
+   "rev_growth": -0.0023,
+   "ebitda_growth": -0.0033,
+   "ebit_growth": 0.0196,
+   "div_yield": 0.038,
+   "market_cap": 0.0734,
+   "enterprise_value": 0.0672
+  },
+  "ev_fcff": {
+   "pe": 0.204,
+   "pb": 0.1839,
+   "ps": 0.1837,
+   "ev_ebitda": 0.2251,
+   "ev_ebit": 0.1876,
+   "ev_fcff": 1.0,
+   "earn_yield": 0.0603,
+   "roe": -0.0048,
+   "roa": -0.0138,
+   "ebitda_margin": -0.0078,
+   "profit_margin": -0.0088,
+   "fcf": 0.0619,
+   "bvps": 0.0028,
+   "asset_turnover": 0.0143,
+   "debt_ebitda": 0.0186,
+   "leverage": -0.0173,
+   "rev_growth": -0.0026,
+   "ebitda_growth": -0.0117,
+   "ebit_growth": -0.0081,
+   "div_yield": 0.0644,
+   "market_cap": 0.1347,
+   "enterprise_value": 0.1237
+  },
+  "earn_yield": {
+   "pe": 0.1222,
+   "pb": 0.0457,
+   "ps": 0.0518,
+   "ev_ebitda": 0.087,
+   "ev_ebit": 0.0888,
+   "ev_fcff": 0.0603,
+   "earn_yield": 1.0,
+   "roe": 0.0711,
+   "roa": 0.149,
+   "ebitda_margin": 0.0423,
+   "profit_margin": 0.0595,
+   "fcf": -0.0065,
+   "bvps": 0.302,
+   "asset_turnover": 0.0478,
+   "debt_ebitda": 0.0049,
+   "leverage": 0.0005,
+   "rev_growth": 0.0293,
+   "ebitda_growth": 0.0518,
+   "ebit_growth": 0.0526,
+   "div_yield": 0.042,
+   "market_cap": 0.0294,
+   "enterprise_value": -0.0178
+  },
+  "roe": {
+   "pe": 0.043,
+   "pb": 0.0847,
+   "ps": 0.04,
+   "ev_ebitda": 0.0501,
+   "ev_ebit": 0.0501,
+   "ev_fcff": -0.0048,
+   "earn_yield": 0.0711,
+   "roe": 1.0,
+   "roa": 0.2721,
+   "ebitda_margin": 0.0715,
+   "profit_margin": 0.0764,
+   "fcf": 0.0231,
+   "bvps": 0.0061,
+   "asset_turnover": 0.0039,
+   "debt_ebitda": -0.0137,
+   "leverage": 0.1319,
+   "rev_growth": -0.0141,
+   "ebitda_growth": 0.0742,
+   "ebit_growth": 0.0634,
+   "div_yield": 0.0401,
+   "market_cap": -0.0471,
+   "enterprise_value": -0.0353
+  },
+  "roa": {
+   "pe": 0.1072,
+   "pb": 0.0585,
+   "ps": 0.1217,
+   "ev_ebitda": 0.1058,
+   "ev_ebit": 0.1217,
+   "ev_fcff": -0.0138,
+   "earn_yield": 0.149,
+   "roe": 0.2721,
+   "roa": 1.0,
+   "ebitda_margin": 0.2681,
+   "profit_margin": 0.2922,
+   "fcf": 0.0627,
+   "bvps": 0.0531,
+   "asset_turnover": 0.061,
+   "debt_ebitda": -0.0476,
+   "leverage": -0.0126,
+   "rev_growth": -0.0847,
+   "ebitda_growth": 0.2048,
+   "ebit_growth": 0.1998,
+   "div_yield": 0.1382,
+   "market_cap": -0.1212,
+   "enterprise_value": -0.1049
+  },
+  "ebitda_margin": {
+   "pe": 0.0181,
+   "pb": -0.0008,
+   "ps": 0.6016,
+   "ev_ebitda": 0.0432,
+   "ev_ebit": 0.0277,
+   "ev_fcff": -0.0078,
+   "earn_yield": 0.0423,
+   "roe": 0.0715,
+   "roa": 0.2681,
+   "ebitda_margin": 1.0,
+   "profit_margin": 0.9313,
+   "fcf": 0.0176,
+   "bvps": 0.0213,
+   "asset_turnover": 0.0999,
+   "debt_ebitda": -0.0286,
+   "leverage": -0.014,
+   "rev_growth": -0.0052,
+   "ebitda_growth": 0.0766,
+   "ebit_growth": 0.0645,
+   "div_yield": 0.0469,
+   "market_cap": -0.0431,
+   "enterprise_value": -0.036
+  },
+  "profit_margin": {
+   "pe": 0.034,
+   "pb": 0.0029,
+   "ps": 0.5928,
+   "ev_ebitda": 0.035,
+   "ev_ebit": 0.0208,
+   "ev_fcff": -0.0088,
+   "earn_yield": 0.0595,
+   "roe": 0.0764,
+   "roa": 0.2922,
+   "ebitda_margin": 0.9313,
+   "profit_margin": 1.0,
+   "fcf": 0.0154,
+   "bvps": 0.0238,
+   "asset_turnover": 0.107,
+   "debt_ebitda": -0.024,
+   "leverage": -0.0147,
+   "rev_growth": -0.0012,
+   "ebitda_growth": 0.0625,
+   "ebit_growth": 0.0532,
+   "div_yield": 0.0541,
+   "market_cap": -0.0423,
+   "enterprise_value": -0.0338
+  },
+  "fcf": {
+   "pe": -0.0059,
+   "pb": -0.0249,
+   "ps": 0.0047,
+   "ev_ebitda": 0.0252,
+   "ev_ebit": 0.031,
+   "ev_fcff": 0.0619,
+   "earn_yield": -0.0065,
+   "roe": 0.0231,
+   "roa": 0.0627,
+   "ebitda_margin": 0.0176,
+   "profit_margin": 0.0154,
+   "fcf": 1.0,
+   "bvps": -0.0028,
+   "asset_turnover": 0.0203,
+   "debt_ebitda": 0.0095,
+   "leverage": -0.0142,
+   "rev_growth": -0.0107,
+   "ebitda_growth": 0.0196,
+   "ebit_growth": 0.0176,
+   "div_yield": 0.0573,
+   "market_cap": -0.2111,
+   "enterprise_value": -0.2639
+  },
+  "bvps": {
+   "pe": 0.0137,
+   "pb": 0.0238,
+   "ps": 0.0218,
+   "ev_ebitda": 0.0277,
+   "ev_ebit": 0.0211,
+   "ev_fcff": 0.0028,
+   "earn_yield": 0.302,
+   "roe": 0.0061,
+   "roa": 0.0531,
+   "ebitda_margin": 0.0213,
+   "profit_margin": 0.0238,
+   "fcf": -0.0028,
+   "bvps": 1.0,
+   "asset_turnover": 0.0136,
+   "debt_ebitda": -0.0105,
+   "leverage": -0.0098,
+   "rev_growth": -0.005,
+   "ebitda_growth": 0.0041,
+   "ebit_growth": 0.0116,
+   "div_yield": 0.0239,
+   "market_cap": -0.0709,
+   "enterprise_value": -0.0826
+  },
+  "asset_turnover": {
+   "pe": 0.0243,
+   "pb": -0.13,
+   "ps": 0.1242,
+   "ev_ebitda": 0.038,
+   "ev_ebit": 0.051,
+   "ev_fcff": 0.0143,
+   "earn_yield": 0.0478,
+   "roe": 0.0039,
+   "roa": 0.061,
+   "ebitda_margin": 0.0999,
+   "profit_margin": 0.107,
+   "fcf": 0.0203,
+   "bvps": 0.0136,
+   "asset_turnover": 1.0,
+   "debt_ebitda": 0.004,
+   "leverage": 0.0154,
+   "rev_growth": 0.0388,
+   "ebitda_growth": 0.0543,
+   "ebit_growth": 0.0447,
+   "div_yield": 0.0264,
+   "market_cap": -0.009,
+   "enterprise_value": -0.0177
+  },
+  "debt_ebitda": {
+   "pe": 0.0413,
+   "pb": -0.016,
+   "ps": -0.0215,
+   "ev_ebitda": 0.5241,
+   "ev_ebit": 0.2575,
+   "ev_fcff": 0.0186,
+   "earn_yield": 0.0049,
+   "roe": -0.0137,
+   "roa": -0.0476,
+   "ebitda_margin": -0.0286,
+   "profit_margin": -0.024,
+   "fcf": 0.0095,
+   "bvps": -0.0105,
+   "asset_turnover": 0.004,
+   "debt_ebitda": 1.0,
+   "leverage": 0.0309,
+   "rev_growth": 0.0035,
+   "ebitda_growth": -0.0453,
+   "ebit_growth": -0.0295,
+   "div_yield": -0.0508,
+   "market_cap": 0.0234,
+   "enterprise_value": 0.0245
+  },
+  "leverage": {
+   "pe": -0.0207,
+   "pb": 0.1178,
+   "ps": -0.0325,
+   "ev_ebitda": -0.0157,
+   "ev_ebit": -0.02,
+   "ev_fcff": -0.0173,
+   "earn_yield": 0.0005,
+   "roe": 0.1319,
+   "roa": -0.0126,
+   "ebitda_margin": -0.014,
+   "profit_margin": -0.0147,
+   "fcf": -0.0142,
+   "bvps": -0.0098,
+   "asset_turnover": 0.0154,
+   "debt_ebitda": 0.0309,
+   "leverage": 1.0,
+   "rev_growth": 0.0074,
+   "ebitda_growth": -0.0074,
+   "ebit_growth": -0.0014,
+   "div_yield": -0.0338,
+   "market_cap": 0.0401,
+   "enterprise_value": -0.0022
+  },
+  "rev_growth": {
+   "pe": 0.0049,
+   "pb": -0.0079,
+   "ps": -0.0029,
+   "ev_ebitda": -0.0053,
+   "ev_ebit": -0.0023,
+   "ev_fcff": -0.0026,
+   "earn_yield": 0.0293,
+   "roe": -0.0141,
+   "roa": -0.0847,
+   "ebitda_margin": -0.0052,
+   "profit_margin": -0.0012,
+   "fcf": -0.0107,
+   "bvps": -0.005,
+   "asset_turnover": 0.0388,
+   "debt_ebitda": 0.0035,
+   "leverage": 0.0074,
+   "rev_growth": 1.0,
+   "ebitda_growth": 0.025,
+   "ebit_growth": 0.0237,
+   "div_yield": -0.0297,
+   "market_cap": 0.0187,
+   "enterprise_value": 0.0108
+  },
+  "ebitda_growth": {
+   "pe": 0.0042,
+   "pb": -0.0056,
+   "ps": 0.0278,
+   "ev_ebitda": 0.0158,
+   "ev_ebit": -0.0033,
+   "ev_fcff": -0.0117,
+   "earn_yield": 0.0518,
+   "roe": 0.0742,
+   "roa": 0.2048,
+   "ebitda_margin": 0.0766,
+   "profit_margin": 0.0625,
+   "fcf": 0.0196,
+   "bvps": 0.0041,
+   "asset_turnover": 0.0543,
+   "debt_ebitda": -0.0453,
+   "leverage": -0.0074,
+   "rev_growth": 0.025,
+   "ebitda_growth": 1.0,
+   "ebit_growth": 0.517,
+   "div_yield": 0.0068,
+   "market_cap": -0.0208,
+   "enterprise_value": -0.0163
+  },
+  "ebit_growth": {
+   "pe": 0.0142,
+   "pb": 0.0015,
+   "ps": 0.0211,
+   "ev_ebitda": 0.0648,
+   "ev_ebit": 0.0196,
+   "ev_fcff": -0.0081,
+   "earn_yield": 0.0526,
+   "roe": 0.0634,
+   "roa": 0.1998,
+   "ebitda_margin": 0.0645,
+   "profit_margin": 0.0532,
+   "fcf": 0.0176,
+   "bvps": 0.0116,
+   "asset_turnover": 0.0447,
+   "debt_ebitda": -0.0295,
+   "leverage": -0.0014,
+   "rev_growth": 0.0237,
+   "ebitda_growth": 0.517,
+   "ebit_growth": 1.0,
+   "div_yield": 0.0013,
+   "market_cap": -0.0266,
+   "enterprise_value": -0.0189
+  },
+  "div_yield": {
+   "pe": 0.0513,
+   "pb": 0.0373,
+   "ps": 0.0449,
+   "ev_ebitda": 0.0485,
+   "ev_ebit": 0.038,
+   "ev_fcff": 0.0644,
+   "earn_yield": 0.042,
+   "roe": 0.0401,
+   "roa": 0.1382,
+   "ebitda_margin": 0.0469,
+   "profit_margin": 0.0541,
+   "fcf": 0.0573,
+   "bvps": 0.0239,
+   "asset_turnover": 0.0264,
+   "debt_ebitda": -0.0508,
+   "leverage": -0.0338,
+   "rev_growth": -0.0297,
+   "ebitda_growth": 0.0068,
+   "ebit_growth": 0.0013,
+   "div_yield": 1.0,
+   "market_cap": -0.0768,
+   "enterprise_value": -0.0827
+  },
+  "market_cap": {
+   "pe": 0.0805,
+   "pb": 0.1814,
+   "ps": 0.0879,
+   "ev_ebitda": 0.0832,
+   "ev_ebit": 0.0734,
+   "ev_fcff": 0.1347,
+   "earn_yield": 0.0294,
+   "roe": -0.0471,
+   "roa": -0.1212,
+   "ebitda_margin": -0.0431,
+   "profit_margin": -0.0423,
+   "fcf": -0.2111,
+   "bvps": -0.0709,
+   "asset_turnover": -0.009,
+   "debt_ebitda": 0.0234,
+   "leverage": 0.0401,
+   "rev_growth": 0.0187,
+   "ebitda_growth": -0.0208,
+   "ebit_growth": -0.0266,
+   "div_yield": -0.0768,
+   "market_cap": 1.0,
+   "enterprise_value": 0.7799
+  },
+  "enterprise_value": {
+   "pe": 0.0735,
+   "pb": 0.1604,
+   "ps": 0.0881,
+   "ev_ebitda": 0.0752,
+   "ev_ebit": 0.0672,
+   "ev_fcff": 0.1237,
+   "earn_yield": -0.0178,
+   "roe": -0.0353,
+   "roa": -0.1049,
+   "ebitda_margin": -0.036,
+   "profit_margin": -0.0338,
+   "fcf": -0.2639,
+   "bvps": -0.0826,
+   "asset_turnover": -0.0177,
+   "debt_ebitda": 0.0245,
+   "leverage": -0.0022,
+   "rev_growth": 0.0108,
+   "ebitda_growth": -0.0163,
+   "ebit_growth": -0.0189,
+   "div_yield": -0.0827,
+   "market_cap": 0.7799,
+   "enterprise_value": 1.0
+  }
+ },
+ "pairs": [
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "profit_margin",
+   "corr": 0.9313,
+   "abs_corr": 0.9313
+  },
+  {
+   "factor_a": "market_cap",
+   "factor_b": "enterprise_value",
+   "corr": 0.7799,
+   "abs_corr": 0.7799
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "ev_ebit",
+   "corr": 0.61,
+   "abs_corr": 0.61
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "ebitda_margin",
+   "corr": 0.6016,
+   "abs_corr": 0.6016
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "profit_margin",
+   "corr": 0.5928,
+   "abs_corr": 0.5928
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "debt_ebitda",
+   "corr": 0.5241,
+   "abs_corr": 0.5241
+  },
+  {
+   "factor_a": "ebitda_growth",
+   "factor_b": "ebit_growth",
+   "corr": 0.517,
+   "abs_corr": 0.517
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "ev_ebit",
+   "corr": 0.4904,
+   "abs_corr": 0.4904
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "ev_ebitda",
+   "corr": 0.4227,
+   "abs_corr": 0.4227
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "ev_ebitda",
+   "corr": 0.3423,
+   "abs_corr": 0.3423
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "pb",
+   "corr": 0.3262,
+   "abs_corr": 0.3262
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "bvps",
+   "corr": 0.302,
+   "abs_corr": 0.302
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "profit_margin",
+   "corr": 0.2922,
+   "abs_corr": 0.2922
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "roa",
+   "corr": 0.2721,
+   "abs_corr": 0.2721
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "ev_ebit",
+   "corr": 0.2721,
+   "abs_corr": 0.2721
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "ebitda_margin",
+   "corr": 0.2681,
+   "abs_corr": 0.2681
+  },
+  {
+   "factor_a": "fcf",
+   "factor_b": "enterprise_value",
+   "corr": -0.2639,
+   "abs_corr": 0.2639
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "debt_ebitda",
+   "corr": 0.2575,
+   "abs_corr": 0.2575
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "ps",
+   "corr": 0.2514,
+   "abs_corr": 0.2514
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "ev_ebitda",
+   "corr": 0.2459,
+   "abs_corr": 0.2459
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "ps",
+   "corr": 0.242,
+   "abs_corr": 0.242
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "ev_fcff",
+   "corr": 0.2251,
+   "abs_corr": 0.2251
+  },
+  {
+   "factor_a": "fcf",
+   "factor_b": "market_cap",
+   "corr": -0.2111,
+   "abs_corr": 0.2111
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "ebitda_growth",
+   "corr": 0.2048,
+   "abs_corr": 0.2048
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "ev_fcff",
+   "corr": 0.204,
+   "abs_corr": 0.204
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "ev_ebit",
+   "corr": 0.202,
+   "abs_corr": 0.202
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "ebit_growth",
+   "corr": 0.1998,
+   "abs_corr": 0.1998
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "ev_fcff",
+   "corr": 0.1876,
+   "abs_corr": 0.1876
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "ev_fcff",
+   "corr": 0.1839,
+   "abs_corr": 0.1839
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "ev_fcff",
+   "corr": 0.1837,
+   "abs_corr": 0.1837
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "market_cap",
+   "corr": 0.1814,
+   "abs_corr": 0.1814
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "enterprise_value",
+   "corr": 0.1604,
+   "abs_corr": 0.1604
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "roa",
+   "corr": 0.149,
+   "abs_corr": 0.149
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "div_yield",
+   "corr": 0.1382,
+   "abs_corr": 0.1382
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "market_cap",
+   "corr": 0.1347,
+   "abs_corr": 0.1347
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "leverage",
+   "corr": 0.1319,
+   "abs_corr": 0.1319
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "asset_turnover",
+   "corr": -0.13,
+   "abs_corr": 0.13
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "asset_turnover",
+   "corr": 0.1242,
+   "abs_corr": 0.1242
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "enterprise_value",
+   "corr": 0.1237,
+   "abs_corr": 0.1237
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "earn_yield",
+   "corr": 0.1222,
+   "abs_corr": 0.1222
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "roa",
+   "corr": 0.1217,
+   "abs_corr": 0.1217
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "roa",
+   "corr": 0.1217,
+   "abs_corr": 0.1217
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "market_cap",
+   "corr": -0.1212,
+   "abs_corr": 0.1212
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "leverage",
+   "corr": 0.1178,
+   "abs_corr": 0.1178
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "roa",
+   "corr": 0.1072,
+   "abs_corr": 0.1072
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "asset_turnover",
+   "corr": 0.107,
+   "abs_corr": 0.107
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "roa",
+   "corr": 0.1058,
+   "abs_corr": 0.1058
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "enterprise_value",
+   "corr": -0.1049,
+   "abs_corr": 0.1049
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "asset_turnover",
+   "corr": 0.0999,
+   "abs_corr": 0.0999
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "earn_yield",
+   "corr": 0.0888,
+   "abs_corr": 0.0888
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "enterprise_value",
+   "corr": 0.0881,
+   "abs_corr": 0.0881
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "market_cap",
+   "corr": 0.0879,
+   "abs_corr": 0.0879
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "earn_yield",
+   "corr": 0.087,
+   "abs_corr": 0.087
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "roe",
+   "corr": 0.0847,
+   "abs_corr": 0.0847
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "rev_growth",
+   "corr": -0.0847,
+   "abs_corr": 0.0847
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "market_cap",
+   "corr": 0.0832,
+   "abs_corr": 0.0832
+  },
+  {
+   "factor_a": "div_yield",
+   "factor_b": "enterprise_value",
+   "corr": -0.0827,
+   "abs_corr": 0.0827
+  },
+  {
+   "factor_a": "bvps",
+   "factor_b": "enterprise_value",
+   "corr": -0.0826,
+   "abs_corr": 0.0826
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "market_cap",
+   "corr": 0.0805,
+   "abs_corr": 0.0805
+  },
+  {
+   "factor_a": "div_yield",
+   "factor_b": "market_cap",
+   "corr": -0.0768,
+   "abs_corr": 0.0768
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "ebitda_growth",
+   "corr": 0.0766,
+   "abs_corr": 0.0766
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "profit_margin",
+   "corr": 0.0764,
+   "abs_corr": 0.0764
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "enterprise_value",
+   "corr": 0.0752,
+   "abs_corr": 0.0752
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "ebitda_growth",
+   "corr": 0.0742,
+   "abs_corr": 0.0742
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "enterprise_value",
+   "corr": 0.0735,
+   "abs_corr": 0.0735
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "market_cap",
+   "corr": 0.0734,
+   "abs_corr": 0.0734
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "ebitda_margin",
+   "corr": 0.0715,
+   "abs_corr": 0.0715
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "roe",
+   "corr": 0.0711,
+   "abs_corr": 0.0711
+  },
+  {
+   "factor_a": "bvps",
+   "factor_b": "market_cap",
+   "corr": -0.0709,
+   "abs_corr": 0.0709
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "enterprise_value",
+   "corr": 0.0672,
+   "abs_corr": 0.0672
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "ebit_growth",
+   "corr": 0.0648,
+   "abs_corr": 0.0648
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "ebit_growth",
+   "corr": 0.0645,
+   "abs_corr": 0.0645
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "div_yield",
+   "corr": 0.0644,
+   "abs_corr": 0.0644
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "ebit_growth",
+   "corr": 0.0634,
+   "abs_corr": 0.0634
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "fcf",
+   "corr": 0.0627,
+   "abs_corr": 0.0627
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "ebitda_growth",
+   "corr": 0.0625,
+   "abs_corr": 0.0625
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "fcf",
+   "corr": 0.0619,
+   "abs_corr": 0.0619
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "asset_turnover",
+   "corr": 0.061,
+   "abs_corr": 0.061
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "earn_yield",
+   "corr": 0.0603,
+   "abs_corr": 0.0603
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "profit_margin",
+   "corr": 0.0595,
+   "abs_corr": 0.0595
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "roa",
+   "corr": 0.0585,
+   "abs_corr": 0.0585
+  },
+  {
+   "factor_a": "fcf",
+   "factor_b": "div_yield",
+   "corr": 0.0573,
+   "abs_corr": 0.0573
+  },
+  {
+   "factor_a": "asset_turnover",
+   "factor_b": "ebitda_growth",
+   "corr": 0.0543,
+   "abs_corr": 0.0543
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "div_yield",
+   "corr": 0.0541,
+   "abs_corr": 0.0541
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "ebit_growth",
+   "corr": 0.0532,
+   "abs_corr": 0.0532
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "bvps",
+   "corr": 0.0531,
+   "abs_corr": 0.0531
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "ebit_growth",
+   "corr": 0.0526,
+   "abs_corr": 0.0526
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "ebitda_growth",
+   "corr": 0.0518,
+   "abs_corr": 0.0518
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "earn_yield",
+   "corr": 0.0518,
+   "abs_corr": 0.0518
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "div_yield",
+   "corr": 0.0513,
+   "abs_corr": 0.0513
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "asset_turnover",
+   "corr": 0.051,
+   "abs_corr": 0.051
+  },
+  {
+   "factor_a": "debt_ebitda",
+   "factor_b": "div_yield",
+   "corr": -0.0508,
+   "abs_corr": 0.0508
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "roe",
+   "corr": 0.0501,
+   "abs_corr": 0.0501
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "roe",
+   "corr": 0.0501,
+   "abs_corr": 0.0501
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "div_yield",
+   "corr": 0.0485,
+   "abs_corr": 0.0485
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "asset_turnover",
+   "corr": 0.0478,
+   "abs_corr": 0.0478
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "debt_ebitda",
+   "corr": -0.0476,
+   "abs_corr": 0.0476
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "market_cap",
+   "corr": -0.0471,
+   "abs_corr": 0.0471
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "div_yield",
+   "corr": 0.0469,
+   "abs_corr": 0.0469
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "earn_yield",
+   "corr": 0.0457,
+   "abs_corr": 0.0457
+  },
+  {
+   "factor_a": "debt_ebitda",
+   "factor_b": "ebitda_growth",
+   "corr": -0.0453,
+   "abs_corr": 0.0453
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "div_yield",
+   "corr": 0.0449,
+   "abs_corr": 0.0449
+  },
+  {
+   "factor_a": "asset_turnover",
+   "factor_b": "ebit_growth",
+   "corr": 0.0447,
+   "abs_corr": 0.0447
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "ebitda_margin",
+   "corr": 0.0432,
+   "abs_corr": 0.0432
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "market_cap",
+   "corr": -0.0431,
+   "abs_corr": 0.0431
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "roe",
+   "corr": 0.043,
+   "abs_corr": 0.043
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "market_cap",
+   "corr": -0.0423,
+   "abs_corr": 0.0423
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "ebitda_margin",
+   "corr": 0.0423,
+   "abs_corr": 0.0423
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "div_yield",
+   "corr": 0.042,
+   "abs_corr": 0.042
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "debt_ebitda",
+   "corr": 0.0413,
+   "abs_corr": 0.0413
+  },
+  {
+   "factor_a": "leverage",
+   "factor_b": "market_cap",
+   "corr": 0.0401,
+   "abs_corr": 0.0401
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "div_yield",
+   "corr": 0.0401,
+   "abs_corr": 0.0401
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "roe",
+   "corr": 0.04,
+   "abs_corr": 0.04
+  },
+  {
+   "factor_a": "asset_turnover",
+   "factor_b": "rev_growth",
+   "corr": 0.0388,
+   "abs_corr": 0.0388
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "div_yield",
+   "corr": 0.038,
+   "abs_corr": 0.038
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "asset_turnover",
+   "corr": 0.038,
+   "abs_corr": 0.038
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "div_yield",
+   "corr": 0.0373,
+   "abs_corr": 0.0373
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "enterprise_value",
+   "corr": -0.036,
+   "abs_corr": 0.036
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "enterprise_value",
+   "corr": -0.0353,
+   "abs_corr": 0.0353
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "profit_margin",
+   "corr": 0.035,
+   "abs_corr": 0.035
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "profit_margin",
+   "corr": 0.034,
+   "abs_corr": 0.034
+  },
+  {
+   "factor_a": "leverage",
+   "factor_b": "div_yield",
+   "corr": -0.0338,
+   "abs_corr": 0.0338
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "enterprise_value",
+   "corr": -0.0338,
+   "abs_corr": 0.0338
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "leverage",
+   "corr": -0.0325,
+   "abs_corr": 0.0325
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "fcf",
+   "corr": 0.031,
+   "abs_corr": 0.031
+  },
+  {
+   "factor_a": "debt_ebitda",
+   "factor_b": "leverage",
+   "corr": 0.0309,
+   "abs_corr": 0.0309
+  },
+  {
+   "factor_a": "rev_growth",
+   "factor_b": "div_yield",
+   "corr": -0.0297,
+   "abs_corr": 0.0297
+  },
+  {
+   "factor_a": "debt_ebitda",
+   "factor_b": "ebit_growth",
+   "corr": -0.0295,
+   "abs_corr": 0.0295
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "market_cap",
+   "corr": 0.0294,
+   "abs_corr": 0.0294
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "rev_growth",
+   "corr": 0.0293,
+   "abs_corr": 0.0293
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "debt_ebitda",
+   "corr": -0.0286,
+   "abs_corr": 0.0286
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "ebitda_growth",
+   "corr": 0.0278,
+   "abs_corr": 0.0278
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "bvps",
+   "corr": 0.0277,
+   "abs_corr": 0.0277
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "ebitda_margin",
+   "corr": 0.0277,
+   "abs_corr": 0.0277
+  },
+  {
+   "factor_a": "ebit_growth",
+   "factor_b": "market_cap",
+   "corr": -0.0266,
+   "abs_corr": 0.0266
+  },
+  {
+   "factor_a": "asset_turnover",
+   "factor_b": "div_yield",
+   "corr": 0.0264,
+   "abs_corr": 0.0264
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "fcf",
+   "corr": 0.0252,
+   "abs_corr": 0.0252
+  },
+  {
+   "factor_a": "rev_growth",
+   "factor_b": "ebitda_growth",
+   "corr": 0.025,
+   "abs_corr": 0.025
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "fcf",
+   "corr": -0.0249,
+   "abs_corr": 0.0249
+  },
+  {
+   "factor_a": "debt_ebitda",
+   "factor_b": "enterprise_value",
+   "corr": 0.0245,
+   "abs_corr": 0.0245
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "asset_turnover",
+   "corr": 0.0243,
+   "abs_corr": 0.0243
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "debt_ebitda",
+   "corr": -0.024,
+   "abs_corr": 0.024
+  },
+  {
+   "factor_a": "bvps",
+   "factor_b": "div_yield",
+   "corr": 0.0239,
+   "abs_corr": 0.0239
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "bvps",
+   "corr": 0.0238,
+   "abs_corr": 0.0238
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "bvps",
+   "corr": 0.0238,
+   "abs_corr": 0.0238
+  },
+  {
+   "factor_a": "rev_growth",
+   "factor_b": "ebit_growth",
+   "corr": 0.0237,
+   "abs_corr": 0.0237
+  },
+  {
+   "factor_a": "debt_ebitda",
+   "factor_b": "market_cap",
+   "corr": 0.0234,
+   "abs_corr": 0.0234
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "fcf",
+   "corr": 0.0231,
+   "abs_corr": 0.0231
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "bvps",
+   "corr": 0.0218,
+   "abs_corr": 0.0218
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "debt_ebitda",
+   "corr": -0.0215,
+   "abs_corr": 0.0215
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "bvps",
+   "corr": 0.0213,
+   "abs_corr": 0.0213
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "bvps",
+   "corr": 0.0211,
+   "abs_corr": 0.0211
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "ebit_growth",
+   "corr": 0.0211,
+   "abs_corr": 0.0211
+  },
+  {
+   "factor_a": "ebitda_growth",
+   "factor_b": "market_cap",
+   "corr": -0.0208,
+   "abs_corr": 0.0208
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "profit_margin",
+   "corr": 0.0208,
+   "abs_corr": 0.0208
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "leverage",
+   "corr": -0.0207,
+   "abs_corr": 0.0207
+  },
+  {
+   "factor_a": "fcf",
+   "factor_b": "asset_turnover",
+   "corr": 0.0203,
+   "abs_corr": 0.0203
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "leverage",
+   "corr": -0.02,
+   "abs_corr": 0.02
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "ebit_growth",
+   "corr": 0.0196,
+   "abs_corr": 0.0196
+  },
+  {
+   "factor_a": "fcf",
+   "factor_b": "ebitda_growth",
+   "corr": 0.0196,
+   "abs_corr": 0.0196
+  },
+  {
+   "factor_a": "ebit_growth",
+   "factor_b": "enterprise_value",
+   "corr": -0.0189,
+   "abs_corr": 0.0189
+  },
+  {
+   "factor_a": "rev_growth",
+   "factor_b": "market_cap",
+   "corr": 0.0187,
+   "abs_corr": 0.0187
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "debt_ebitda",
+   "corr": 0.0186,
+   "abs_corr": 0.0186
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "ebitda_margin",
+   "corr": 0.0181,
+   "abs_corr": 0.0181
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "enterprise_value",
+   "corr": -0.0178,
+   "abs_corr": 0.0178
+  },
+  {
+   "factor_a": "asset_turnover",
+   "factor_b": "enterprise_value",
+   "corr": -0.0177,
+   "abs_corr": 0.0177
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "fcf",
+   "corr": 0.0176,
+   "abs_corr": 0.0176
+  },
+  {
+   "factor_a": "fcf",
+   "factor_b": "ebit_growth",
+   "corr": 0.0176,
+   "abs_corr": 0.0176
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "leverage",
+   "corr": -0.0173,
+   "abs_corr": 0.0173
+  },
+  {
+   "factor_a": "ebitda_growth",
+   "factor_b": "enterprise_value",
+   "corr": -0.0163,
+   "abs_corr": 0.0163
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "debt_ebitda",
+   "corr": -0.016,
+   "abs_corr": 0.016
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "ebitda_growth",
+   "corr": 0.0158,
+   "abs_corr": 0.0158
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "leverage",
+   "corr": -0.0157,
+   "abs_corr": 0.0157
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "fcf",
+   "corr": 0.0154,
+   "abs_corr": 0.0154
+  },
+  {
+   "factor_a": "asset_turnover",
+   "factor_b": "leverage",
+   "corr": 0.0154,
+   "abs_corr": 0.0154
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "leverage",
+   "corr": -0.0147,
+   "abs_corr": 0.0147
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "asset_turnover",
+   "corr": 0.0143,
+   "abs_corr": 0.0143
+  },
+  {
+   "factor_a": "fcf",
+   "factor_b": "leverage",
+   "corr": -0.0142,
+   "abs_corr": 0.0142
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "ebit_growth",
+   "corr": 0.0142,
+   "abs_corr": 0.0142
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "rev_growth",
+   "corr": -0.0141,
+   "abs_corr": 0.0141
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "leverage",
+   "corr": -0.014,
+   "abs_corr": 0.014
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "roa",
+   "corr": -0.0138,
+   "abs_corr": 0.0138
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "debt_ebitda",
+   "corr": -0.0137,
+   "abs_corr": 0.0137
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "bvps",
+   "corr": 0.0137,
+   "abs_corr": 0.0137
+  },
+  {
+   "factor_a": "bvps",
+   "factor_b": "asset_turnover",
+   "corr": 0.0136,
+   "abs_corr": 0.0136
+  },
+  {
+   "factor_a": "roa",
+   "factor_b": "leverage",
+   "corr": -0.0126,
+   "abs_corr": 0.0126
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "ebitda_growth",
+   "corr": -0.0117,
+   "abs_corr": 0.0117
+  },
+  {
+   "factor_a": "bvps",
+   "factor_b": "ebit_growth",
+   "corr": 0.0116,
+   "abs_corr": 0.0116
+  },
+  {
+   "factor_a": "rev_growth",
+   "factor_b": "enterprise_value",
+   "corr": 0.0108,
+   "abs_corr": 0.0108
+  },
+  {
+   "factor_a": "fcf",
+   "factor_b": "rev_growth",
+   "corr": -0.0107,
+   "abs_corr": 0.0107
+  },
+  {
+   "factor_a": "bvps",
+   "factor_b": "debt_ebitda",
+   "corr": -0.0105,
+   "abs_corr": 0.0105
+  },
+  {
+   "factor_a": "bvps",
+   "factor_b": "leverage",
+   "corr": -0.0098,
+   "abs_corr": 0.0098
+  },
+  {
+   "factor_a": "fcf",
+   "factor_b": "debt_ebitda",
+   "corr": 0.0095,
+   "abs_corr": 0.0095
+  },
+  {
+   "factor_a": "asset_turnover",
+   "factor_b": "market_cap",
+   "corr": -0.009,
+   "abs_corr": 0.009
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "profit_margin",
+   "corr": -0.0088,
+   "abs_corr": 0.0088
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "ebit_growth",
+   "corr": -0.0081,
+   "abs_corr": 0.0081
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "rev_growth",
+   "corr": -0.0079,
+   "abs_corr": 0.0079
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "ebitda_margin",
+   "corr": -0.0078,
+   "abs_corr": 0.0078
+  },
+  {
+   "factor_a": "leverage",
+   "factor_b": "ebitda_growth",
+   "corr": -0.0074,
+   "abs_corr": 0.0074
+  },
+  {
+   "factor_a": "leverage",
+   "factor_b": "rev_growth",
+   "corr": 0.0074,
+   "abs_corr": 0.0074
+  },
+  {
+   "factor_a": "ebitda_growth",
+   "factor_b": "div_yield",
+   "corr": 0.0068,
+   "abs_corr": 0.0068
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "fcf",
+   "corr": -0.0065,
+   "abs_corr": 0.0065
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "bvps",
+   "corr": 0.0061,
+   "abs_corr": 0.0061
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "fcf",
+   "corr": -0.0059,
+   "abs_corr": 0.0059
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "ebitda_growth",
+   "corr": -0.0056,
+   "abs_corr": 0.0056
+  },
+  {
+   "factor_a": "ev_ebitda",
+   "factor_b": "rev_growth",
+   "corr": -0.0053,
+   "abs_corr": 0.0053
+  },
+  {
+   "factor_a": "ebitda_margin",
+   "factor_b": "rev_growth",
+   "corr": -0.0052,
+   "abs_corr": 0.0052
+  },
+  {
+   "factor_a": "bvps",
+   "factor_b": "rev_growth",
+   "corr": -0.005,
+   "abs_corr": 0.005
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "debt_ebitda",
+   "corr": 0.0049,
+   "abs_corr": 0.0049
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "rev_growth",
+   "corr": 0.0049,
+   "abs_corr": 0.0049
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "roe",
+   "corr": -0.0048,
+   "abs_corr": 0.0048
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "fcf",
+   "corr": 0.0047,
+   "abs_corr": 0.0047
+  },
+  {
+   "factor_a": "pe",
+   "factor_b": "ebitda_growth",
+   "corr": 0.0042,
+   "abs_corr": 0.0042
+  },
+  {
+   "factor_a": "bvps",
+   "factor_b": "ebitda_growth",
+   "corr": 0.0041,
+   "abs_corr": 0.0041
+  },
+  {
+   "factor_a": "asset_turnover",
+   "factor_b": "debt_ebitda",
+   "corr": 0.004,
+   "abs_corr": 0.004
+  },
+  {
+   "factor_a": "roe",
+   "factor_b": "asset_turnover",
+   "corr": 0.0039,
+   "abs_corr": 0.0039
+  },
+  {
+   "factor_a": "debt_ebitda",
+   "factor_b": "rev_growth",
+   "corr": 0.0035,
+   "abs_corr": 0.0035
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "ebitda_growth",
+   "corr": -0.0033,
+   "abs_corr": 0.0033
+  },
+  {
+   "factor_a": "ps",
+   "factor_b": "rev_growth",
+   "corr": -0.0029,
+   "abs_corr": 0.0029
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "profit_margin",
+   "corr": 0.0029,
+   "abs_corr": 0.0029
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "bvps",
+   "corr": 0.0028,
+   "abs_corr": 0.0028
+  },
+  {
+   "factor_a": "fcf",
+   "factor_b": "bvps",
+   "corr": -0.0028,
+   "abs_corr": 0.0028
+  },
+  {
+   "factor_a": "ev_fcff",
+   "factor_b": "rev_growth",
+   "corr": -0.0026,
+   "abs_corr": 0.0026
+  },
+  {
+   "factor_a": "ev_ebit",
+   "factor_b": "rev_growth",
+   "corr": -0.0023,
+   "abs_corr": 0.0023
+  },
+  {
+   "factor_a": "leverage",
+   "factor_b": "enterprise_value",
+   "corr": -0.0022,
+   "abs_corr": 0.0022
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "ebit_growth",
+   "corr": 0.0015,
+   "abs_corr": 0.0015
+  },
+  {
+   "factor_a": "leverage",
+   "factor_b": "ebit_growth",
+   "corr": -0.0014,
+   "abs_corr": 0.0014
+  },
+  {
+   "factor_a": "ebit_growth",
+   "factor_b": "div_yield",
+   "corr": 0.0013,
+   "abs_corr": 0.0013
+  },
+  {
+   "factor_a": "profit_margin",
+   "factor_b": "rev_growth",
+   "corr": -0.0012,
+   "abs_corr": 0.0012
+  },
+  {
+   "factor_a": "pb",
+   "factor_b": "ebitda_margin",
+   "corr": -0.0008,
+   "abs_corr": 0.0008
+  },
+  {
+   "factor_a": "earn_yield",
+   "factor_b": "leverage",
+   "corr": 0.0005,
+   "abs_corr": 0.0005
+  }
+ ],
+ "pca": {
+  "factors": [
+   "pe",
+   "pb",
+   "ps",
+   "ev_ebitda",
+   "ev_ebit",
+   "ev_fcff",
+   "earn_yield",
+   "roe",
+   "roa",
+   "ebitda_margin",
+   "profit_margin",
+   "fcf",
+   "bvps",
+   "asset_turnover",
+   "debt_ebitda",
+   "leverage",
+   "rev_growth",
+   "ebitda_growth",
+   "ebit_growth",
+   "div_yield",
+   "market_cap",
+   "enterprise_value"
+  ],
+  "eigenvalues": [
+   3.0142954612262667,
+   2.4153583975922124,
+   1.8830591388586653,
+   1.5914379318018423,
+   1.3222367036865275,
+   1.236097337483985,
+   1.1647555405009358,
+   1.0539315908970064,
+   1.0224456879120216,
+   0.9443284366695764,
+   0.9115055284555107,
+   0.8787536652893768,
+   0.7724995920995507,
+   0.7010662643155249,
+   0.6305036570437752,
+   0.6207234586569214,
+   0.4859305870799793,
+   0.473767088942112,
+   0.36396591266440215,
+   0.2319998131163516,
+   0.21400472556718275,
+   0.06733348014026957
+  ],
+  "explained": [
+   0.1370134300557394,
+   0.1097890180723733,
+   0.08559359722084843,
+   0.07233808780917467,
+   0.06010166834938762,
+   0.056186242612908416,
+   0.052943433659133454,
+   0.04790598140440939,
+   0.04647480399600099,
+   0.042924019848617115,
+   0.041432069475250494,
+   0.03994334842224441,
+   0.035113617822706854,
+   0.03186664837797841,
+   0.028659257138353423,
+   0.028214702666223702,
+   0.022087753958180883,
+   0.021534867679186914,
+   0.01654390512110919,
+   0.010545446050743257,
+   0.009727487525781035,
+   0.0030606127336486174
+  ],
+  "cumulative": [
+   0.1370134300557394,
+   0.2468024481281127,
+   0.3323960453489611,
+   0.4047341331581358,
+   0.4648358015075234,
+   0.5210220441204318,
+   0.5739654777795653,
+   0.6218714591839747,
+   0.6683462631799757,
+   0.7112702830285929,
+   0.7527023525038433,
+   0.7926457009260878,
+   0.8277593187487946,
+   0.859625967126773,
+   0.8882852242651263,
+   0.9164999269313501,
+   0.9385876808895309,
+   0.9601225485687178,
+   0.976666453689827,
+   0.9872118997405702,
+   0.9969393872663512,
+   0.9999999999999999
+  ],
+  "loadings": {
+   "PC1": {
+    "pe": -0.5397,
+    "pb": -0.3888,
+    "ps": -0.7508,
+    "ev_ebitda": -0.6414,
+    "ev_ebit": -0.5934,
+    "ev_fcff": -0.3096,
+    "earn_yield": -0.2168,
+    "roe": -0.183,
+    "roa": -0.387,
+    "ebitda_margin": -0.6064,
+    "profit_margin": -0.6089,
+    "fcf": -0.0189,
+    "bvps": -0.0799,
+    "asset_turnover": -0.1445,
+    "debt_ebitda": -0.2146,
+    "leverage": 0.0035,
+    "rev_growth": 0.0136,
+    "ebitda_growth": -0.1433,
+    "ebit_growth": -0.1564,
+    "div_yield": -0.1263,
+    "market_cap": -0.1534,
+    "enterprise_value": -0.147
+   },
+   "PC2": {
+    "pe": -0.3522,
+    "pb": -0.3359,
+    "ps": 0.1714,
+    "ev_ebitda": -0.4191,
+    "ev_ebit": -0.3906,
+    "ev_fcff": -0.2904,
+    "earn_yield": 0.0264,
+    "roe": 0.1405,
+    "roa": 0.3691,
+    "ebitda_margin": 0.5977,
+    "profit_margin": 0.5982,
+    "fcf": 0.2047,
+    "bvps": 0.0849,
+    "asset_turnover": 0.1454,
+    "debt_ebitda": -0.309,
+    "leverage": -0.0422,
+    "rev_growth": -0.0279,
+    "ebitda_growth": 0.2289,
+    "ebit_growth": 0.1999,
+    "div_yield": 0.1168,
+    "market_cap": -0.5489,
+    "enterprise_value": -0.5376
+   },
+   "PC3": {
+    "pe": 0.2379,
+    "pb": -0.0202,
+    "ps": -0.2624,
+    "ev_ebitda": 0.3631,
+    "ev_ebit": 0.3449,
+    "ev_fcff": 0.0331,
+    "earn_yield": 0.1614,
+    "roe": 0.1365,
+    "roa": 0.1862,
+    "ebitda_margin": -0.3739,
+    "profit_margin": -0.3708,
+    "fcf": 0.3883,
+    "bvps": 0.1787,
+    "asset_turnover": -0.0075,
+    "debt_ebitda": 0.2925,
+    "leverage": -0.0166,
+    "rev_growth": -0.0383,
+    "ebitda_growth": 0.1045,
+    "ebit_growth": 0.1367,
+    "div_yield": 0.1689,
+    "market_cap": -0.6295,
+    "enterprise_value": -0.6513
+   },
+   "PC4": {
+    "pe": 0.0025,
+    "pb": 0.0944,
+    "ps": -0.2061,
+    "ev_ebitda": -0.0973,
+    "ev_ebit": -0.0785,
+    "ev_fcff": -0.0177,
+    "earn_yield": 0.2068,
+    "roe": 0.2576,
+    "roa": 0.3146,
+    "ebitda_margin": -0.1923,
+    "profit_margin": -0.1936,
+    "fcf": -0.151,
+    "bvps": 0.0658,
+    "asset_turnover": 0.0144,
+    "debt_ebitda": -0.1961,
+    "leverage": 0.0952,
+    "rev_growth": 0.038,
+    "ebitda_growth": 0.7238,
+    "ebit_growth": 0.716,
+    "div_yield": -0.0121,
+    "market_cap": 0.2512,
+    "enterprise_value": 0.2558
+   },
+   "PC5": {
+    "pe": 0.152,
+    "pb": 0.3516,
+    "ps": -0.0104,
+    "ev_ebitda": -0.254,
+    "ev_ebit": -0.1116,
+    "ev_fcff": 0.1587,
+    "earn_yield": 0.4738,
+    "roe": 0.236,
+    "roa": 0.1412,
+    "ebitda_margin": -0.0791,
+    "profit_margin": -0.0585,
+    "fcf": -0.0237,
+    "bvps": 0.4755,
+    "asset_turnover": -0.1824,
+    "debt_ebitda": -0.4794,
+    "leverage": 0.1421,
+    "rev_growth": -0.1036,
+    "ebitda_growth": -0.2899,
+    "ebit_growth": -0.307,
+    "div_yield": 0.2527,
+    "market_cap": 0.0193,
+    "enterprise_value": -0.0163
+   },
+   "PC6": {
+    "pe": -0.1065,
+    "pb": -0.3567,
+    "ps": -0.0292,
+    "ev_ebitda": 0.0791,
+    "ev_ebit": 0.0209,
+    "ev_fcff": -0.1068,
+    "earn_yield": 0.5453,
+    "roe": -0.3087,
+    "roa": -0.1304,
+    "ebitda_margin": 0.0295,
+    "profit_margin": 0.0348,
+    "fcf": -0.192,
+    "bvps": 0.5873,
+    "asset_turnover": 0.2976,
+    "debt_ebitda": 0.2329,
+    "leverage": -0.2545,
+    "rev_growth": 0.2111,
+    "ebitda_growth": 0.0006,
+    "ebit_growth": 0.0117,
+    "div_yield": -0.1526,
+    "market_cap": 0.0743,
+    "enterprise_value": 0.0632
+   },
+   "PC7": {
+    "pe": 0.1806,
+    "pb": 0.0259,
+    "ps": 0.1173,
+    "ev_ebitda": -0.1096,
+    "ev_ebit": 0.0075,
+    "ev_fcff": 0.3871,
+    "earn_yield": -0.0776,
+    "roe": -0.4917,
+    "roa": -0.1461,
+    "ebitda_margin": -0.0565,
+    "profit_margin": -0.0642,
+    "fcf": 0.2206,
+    "bvps": -0.0652,
+    "asset_turnover": 0.0466,
+    "debt_ebitda": -0.4106,
+    "leverage": -0.5835,
+    "rev_growth": 0.0603,
+    "ebitda_growth": 0.1517,
+    "ebit_growth": 0.14,
+    "div_yield": 0.2597,
+    "market_cap": -0.0283,
+    "enterprise_value": -0.0262
+   },
+   "PC8": {
+    "pe": -0.0709,
+    "pb": -0.1764,
+    "ps": -0.1067,
+    "ev_ebitda": 0.0699,
+    "ev_ebit": 0.0345,
+    "ev_fcff": -0.1576,
+    "earn_yield": -0.0094,
+    "roe": 0.0133,
+    "roa": 0.2801,
+    "ebitda_margin": -0.0001,
+    "profit_margin": 0.0057,
+    "fcf": -0.199,
+    "bvps": 0.0075,
+    "asset_turnover": -0.2071,
+    "debt_ebitda": 0.1444,
+    "leverage": -0.4361,
+    "rev_growth": -0.715,
+    "ebitda_growth": -0.0476,
+    "ebit_growth": -0.0447,
+    "div_yield": 0.2556,
+    "market_cap": 0.0755,
+    "enterprise_value": 0.1292
+   },
+   "PC9": {
+    "pe": -0.0328,
+    "pb": -0.2684,
+    "ps": -0.0789,
+    "ev_ebitda": -0.0242,
+    "ev_ebit": 0.0328,
+    "ev_fcff": 0.1388,
+    "earn_yield": 0.0009,
+    "roe": 0.2285,
+    "roa": 0.1441,
+    "ebitda_margin": -0.0899,
+    "profit_margin": -0.0744,
+    "fcf": 0.0668,
+    "bvps": -0.1971,
+    "asset_turnover": 0.7251,
+    "debt_ebitda": -0.0329,
+    "leverage": 0.0962,
+    "rev_growth": 0.0221,
+    "ebitda_growth": -0.1154,
+    "ebit_growth": -0.1433,
+    "div_yield": 0.4365,
+    "market_cap": 0.13,
+    "enterprise_value": 0.1202
+   },
+   "PC10": {
+    "pe": -0.1798,
+    "pb": 0.0026,
+    "ps": 0.0608,
+    "ev_ebitda": -0.0065,
+    "ev_ebit": -0.1049,
+    "ev_fcff": 0.3491,
+    "earn_yield": 0.0468,
+    "roe": -0.1648,
+    "roa": -0.1487,
+    "ebitda_margin": 0.0159,
+    "profit_margin": 0.0025,
+    "fcf": 0.4054,
+    "bvps": 0.1611,
+    "asset_turnover": 0.1638,
+    "debt_ebitda": 0.0716,
+    "leverage": 0.3226,
+    "rev_growth": -0.563,
+    "ebitda_growth": 0.0792,
+    "ebit_growth": 0.0838,
+    "div_yield": -0.2456,
+    "market_cap": 0.0787,
+    "enterprise_value": 0.0238
+   },
+   "PC11": {
+    "pe": -0.3562,
+    "pb": -0.03,
+    "ps": -0.0536,
+    "ev_ebitda": 0.0834,
+    "ev_ebit": -0.1704,
+    "ev_fcff": 0.2181,
+    "earn_yield": 0.0619,
+    "roe": 0.0221,
+    "roa": -0.0285,
+    "ebitda_margin": 0.0724,
+    "profit_margin": 0.0699,
+    "fcf": 0.2697,
+    "bvps": 0.0559,
+    "asset_turnover": -0.3825,
+    "debt_ebitda": 0.3378,
+    "leverage": 0.0465,
+    "rev_growth": 0.2719,
+    "ebitda_growth": 0.031,
+    "ebit_growth": 0.0334,
+    "div_yield": 0.4862,
+    "market_cap": 0.1375,
+    "enterprise_value": 0.1105
+   },
+   "PC12": {
+    "pe": -0.0386,
+    "pb": -0.1513,
+    "ps": -0.0581,
+    "ev_ebitda": -0.0396,
+    "ev_ebit": 0.0122,
+    "ev_fcff": 0.1635,
+    "earn_yield": 0.1147,
+    "roe": 0.4074,
+    "roa": 0.1877,
+    "ebitda_margin": -0.0102,
+    "profit_margin": -0.0019,
+    "fcf": 0.3916,
+    "bvps": -0.1024,
+    "asset_turnover": -0.082,
+    "debt_ebitda": -0.0225,
+    "leverage": -0.4038,
+    "rev_growth": 0.1283,
+    "ebitda_growth": -0.0951,
+    "ebit_growth": -0.1189,
+    "div_yield": -0.4571,
+    "market_cap": 0.1104,
+    "enterprise_value": 0.1147
+   },
+   "PC13": {
+    "pe": -0.1192,
+    "pb": -0.1209,
+    "ps": 0.0295,
+    "ev_ebitda": 0.027,
+    "ev_ebit": -0.0843,
+    "ev_fcff": 0.5934,
+    "earn_yield": -0.0681,
+    "roe": 0.2127,
+    "roa": -0.0685,
+    "ebitda_margin": 0.0031,
+    "profit_margin": -0.0041,
+    "fcf": -0.505,
+    "bvps": 0.0061,
+    "asset_turnover": -0.0347,
+    "debt_ebitda": 0.0513,
+    "leverage": -0.0457,
+    "rev_growth": -0.0077,
+    "ebitda_growth": 0.0174,
+    "ebit_growth": 0.0217,
+    "div_yield": -0.0861,
+    "market_cap": -0.1978,
+    "enterprise_value": -0.1407
+   },
+   "PC14": {
+    "pe": -0.1423,
+    "pb": 0.2429,
+    "ps": 0.1246,
+    "ev_ebitda": 0.058,
+    "ev_ebit": -0.0573,
+    "ev_fcff": -0.1155,
+    "earn_yield": -0.4416,
+    "roe": 0.2708,
+    "roa": -0.1517,
+    "ebitda_margin": -0.0445,
+    "profit_margin": -0.0604,
+    "fcf": 0.0527,
+    "bvps": 0.4462,
+    "asset_turnover": 0.1825,
+    "debt_ebitda": 0.0282,
+    "leverage": -0.2195,
+    "rev_growth": 0.01,
+    "ebitda_growth": 0.0313,
+    "ebit_growth": 0.0286,
+    "div_yield": 0.0417,
+    "market_cap": 0.0025,
+    "enterprise_value": 0.0391
+   },
+   "PC15": {
+    "pe": 0.1541,
+    "pb": -0.4553,
+    "ps": -0.062,
+    "ev_ebitda": -0.035,
+    "ev_ebit": 0.2777,
+    "ev_fcff": 0.0651,
+    "earn_yield": -0.3024,
+    "roe": -0.0127,
+    "roa": 0.0714,
+    "ebitda_margin": 0.0366,
+    "profit_margin": 0.0274,
+    "fcf": 0.048,
+    "bvps": 0.2866,
+    "asset_turnover": -0.1965,
+    "debt_ebitda": -0.1874,
+    "leverage": 0.2014,
+    "rev_growth": 0.0489,
+    "ebitda_growth": -0.0137,
+    "ebit_growth": 0.0123,
+    "div_yield": 0.0161,
+    "market_cap": 0.0677,
+    "enterprise_value": 0.089
+   },
+   "PC16": {
+    "pe": 0.096,
+    "pb": -0.1968,
+    "ps": 0.1482,
+    "ev_ebitda": 0.0043,
+    "ev_ebit": 0.0781,
+    "ev_fcff": -0.1291,
+    "earn_yield": 0.1989,
+    "roe": 0.3193,
+    "roa": -0.5582,
+    "ebitda_margin": 0.026,
+    "profit_margin": 0.0031,
+    "fcf": 0.0409,
+    "bvps": -0.1056,
+    "asset_turnover": -0.0899,
+    "debt_ebitda": -0.0871,
+    "leverage": -0.0266,
+    "rev_growth": -0.1226,
+    "ebitda_growth": 0.0937,
+    "ebit_growth": 0.0736,
+    "div_yield": 0.1245,
+    "market_cap": 0.0033,
+    "enterprise_value": -0.0166
+   },
+   "PC17": {
+    "pe": -0.25,
+    "pb": 0.0046,
+    "ps": 0.1175,
+    "ev_ebitda": 0.0779,
+    "ev_ebit": 0.1432,
+    "ev_fcff": -0.0292,
+    "earn_yield": 0.0451,
+    "roe": -0.0109,
+    "roa": 0.0305,
+    "ebitda_margin": -0.0473,
+    "profit_margin": -0.0582,
+    "fcf": -0.0111,
+    "bvps": -0.0431,
+    "asset_turnover": -0.0092,
+    "debt_ebitda": -0.1439,
+    "leverage": 0.0064,
+    "rev_growth": 0.0089,
+    "ebitda_growth": -0.4291,
+    "ebit_growth": 0.4077,
+    "div_yield": -0.0073,
+    "market_cap": -0.0057,
+    "enterprise_value": -0.0064
+   },
+   "PC18": {
+    "pe": 0.3914,
+    "pb": -0.01,
+    "ps": -0.2001,
+    "ev_ebitda": -0.0728,
+    "ev_ebit": -0.2864,
+    "ev_fcff": 0.0395,
+    "earn_yield": -0.0555,
+    "roe": 0.0436,
+    "roa": -0.06,
+    "ebitda_margin": 0.0815,
+    "profit_margin": 0.1061,
+    "fcf": 0.0298,
+    "bvps": 0.0456,
+    "asset_turnover": 0.034,
+    "debt_ebitda": 0.1731,
+    "leverage": -0.0254,
+    "rev_growth": -0.0137,
+    "ebitda_growth": -0.2426,
+    "ebit_growth": 0.2653,
+    "div_yield": 0.016,
+    "market_cap": 0.012,
+    "enterprise_value": 0.0231
+   },
+   "PC19": {
+    "pe": -0.0936,
+    "pb": 0.1677,
+    "ps": -0.3189,
+    "ev_ebitda": -0.2238,
+    "ev_ebit": 0.3353,
+    "ev_fcff": 0.0532,
+    "earn_yield": 0.0069,
+    "roe": 0.0166,
+    "roa": -0.1118,
+    "ebitda_margin": 0.1394,
+    "profit_margin": 0.1366,
+    "fcf": -0.0116,
+    "bvps": -0.0023,
+    "asset_turnover": 0.0496,
+    "debt_ebitda": 0.0552,
+    "leverage": -0.0466,
+    "rev_growth": -0.016,
+    "ebitda_growth": 0.0032,
+    "ebit_growth": 0.0297,
+    "div_yield": 0.0115,
+    "market_cap": -0.0021,
+    "enterprise_value": -0.0095
+   },
+   "PC20": {
+    "pe": 0.0469,
+    "pb": -0.0152,
+    "ps": 0.2323,
+    "ev_ebitda": -0.3241,
+    "ev_ebit": 0.0782,
+    "ev_fcff": 0.0065,
+    "earn_yield": 0.005,
+    "roe": -0.0009,
+    "roa": 0.0524,
+    "ebitda_margin": -0.091,
+    "profit_margin": -0.0735,
+    "fcf": 0.0035,
+    "bvps": 0.0043,
+    "asset_turnover": -0.0158,
+    "debt_ebitda": 0.1976,
+    "leverage": 0.0035,
+    "rev_growth": 0.0039,
+    "ebitda_growth": -0.0098,
+    "ebit_growth": 0.0311,
+    "div_yield": 0.0145,
+    "market_cap": -0.0637,
+    "enterprise_value": 0.0573
+   },
+   "PC21": {
+    "pe": 0.0104,
+    "pb": -0.0105,
+    "ps": 0.0401,
+    "ev_ebitda": -0.0545,
+    "ev_ebit": 0.011,
+    "ev_fcff": 0.0023,
+    "earn_yield": -0.0225,
+    "roe": 0.0079,
+    "roa": 0.0186,
+    "ebitda_margin": -0.0132,
+    "profit_margin": -0.0139,
+    "fcf": -0.0244,
+    "bvps": 0.0037,
+    "asset_turnover": -0.0062,
+    "debt_ebitda": 0.0353,
+    "leverage": -0.0176,
+    "rev_growth": -0.0008,
+    "ebitda_growth": -0.0028,
+    "ebit_growth": 0.0082,
+    "div_yield": -0.0,
+    "market_cap": 0.3182,
+    "enterprise_value": -0.323
+   },
+   "PC22": {
+    "pe": 0.006,
+    "pb": 0.0007,
+    "ps": -0.0008,
+    "ev_ebitda": -0.0058,
+    "ev_ebit": -0.0032,
+    "ev_fcff": 0.0001,
+    "earn_yield": 0.0028,
+    "roe": -0.0004,
+    "roa": 0.0065,
+    "ebitda_margin": 0.1827,
+    "profit_margin": -0.1838,
+    "fcf": -0.0002,
+    "bvps": -0.0005,
+    "asset_turnover": 0.0016,
+    "debt_ebitda": 0.0049,
+    "leverage": -0.0004,
+    "rev_growth": 0.0012,
+    "ebitda_growth": -0.0033,
+    "ebit_growth": -0.0014,
+    "div_yield": 0.0009,
+    "market_cap": -0.0005,
+    "enterprise_value": 0.0016
+   }
+  }
+ },
+ "effective_dimensionality": {
+  "kaiser_gt1": 9,
+  "n_pc_80pct": 13,
+  "n_pc_90pct": 16
+ },
+ "clusters": [
+  {
+   "members": [
+    "ebitda_margin",
+    "profit_margin"
+   ],
+   "keep": "profit_margin",
+   "drop": [
+    "ebitda_margin"
+   ],
+   "max_abs_corr": 0.9313405775601314
+  },
+  {
+   "members": [
+    "enterprise_value",
+    "market_cap"
+   ],
+   "keep": "enterprise_value",
+   "drop": [
+    "market_cap"
+   ],
+   "max_abs_corr": 0.7799454535526619
+  }
+ ]
+}
