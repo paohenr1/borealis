@@ -13,8 +13,8 @@ It is a research project, not investment advice. Backtest figures reported in
 ```bash
 pip install -e .
 
-# Run the test suite (unittest; 56 tests)
-python -m unittest discover -s tests
+# Run the test suite (122 tests)
+python -m pytest tests/ -q
 
 # Rank the sample workbook universe as of 2026-09-22
 PYTHONPATH=src python scripts/rank.py \
@@ -93,7 +93,57 @@ panel and backtest you need your own vendor data:
   adapt `intrinio_bulk.py` to another source and the rest of the pipeline is
   unchanged.
 - The `data/raw/` workbook path (`scripts/rank.py`) works with any export in
-  the same 27-column sector-block layout; see `ingest/loader.py`.
+  the same 17-column sector-block layout (extra trailing columns are
+  ignored); see `ingest/loader.py`.
+
+## Live universe (no workbook)
+
+A second ingest path builds the same 17-column frame from vendor bulk data
+instead of the spreadsheet — the deduplicated union of the S&P 500,
+Nasdaq-100, and Dow (518 names on 2026-09-29) sourced from Intrinio bulk
+downloads:
+
+```bash
+# one-time: refresh bulk zips (Intrinio bulk products, downloaded 2026-09-29)
+PYTHONPATH=src python scripts/fetch_intrinio_bulk.py \
+    --out data/raw/intrinio/2026-09-29
+
+# rank the live universe
+PYTHONPATH=src python scripts/rank.py --live \
+    --universe-csv data/raw/universe_520.csv \
+    --raw-dir data/raw/intrinio/2026-09-29 \
+    --asof 2026-09-29 --top 10 \
+    --out data/processed/scores_live_2026-09-29.csv
+```
+
+`--live` leaves the workbook path untouched (`--input` behaves exactly as
+before). Bulk zips are licensed data and are **not** committed (see
+`.gitignore`); the manifest records the exact refresh.
+
+**Data products** (Intrinio bulk, refreshed 2026-09-29; 36 zips, ~1.0 GB):
+US Stock Prices 5y (`bdt_nzJNzB`), US Fundamentals 5y (`bdt_AXGAyM`), US
+Company Metadata (`bdt_xgxWyr`).
+
+**Metric lineage** (full detail in `src/borealis/ingest/universe_live.py`):
+price / 52-week high-low from the price bulk (raw closes; snapshot
+2026-09-28); market cap, P/E, P/S, ROE, debt-to-equity, free cash flow from
+the latest TTM calculation vintage, where "latest" uses the same
+point-in-time rule as `panel.py` (later of `filing_date` /
+`first_calculable_at`); quarterly sales growth and TTM revenue from
+quarterly income statements; sector from the SIC industry-group name via an
+explicit 152-entry map to the 11 workbook buckets (Intrinio has no GICS
+field; the 17 SIC divisions are too coarse).
+
+**Documented limitations.** The bulk carries **no PEG tag** — `peg_ratio`
+is NaN for all 518 names and the value factor degrades gracefully to P/E +
+P/S (the factor averages available inputs; verified by test). The bulk
+carries **no beta tag** — `trailing_beta` is a 252-trading-day OLS regression
+on split/dividend-adjusted closes vs SPY, with a data-quality quarantine
+(single-day |log return| > 1.0 → NaN, sector-median imputed; caught ticker
+contamination in BNY and bad ticks in MRNA/SPCX on 2026-09-29). Five
+same-issuer ticker fallbacks are explicit in `TICKER_ALIASES` (BF.B→BF-A,
+FOX→FOXA, GOOG→GOOGL, NWS→NWSA, MAA→MAAI); prices always use the universe
+ticker and output tickers are the universe (Wikipedia) form.
 
 ## Methodology notes (v0.1)
 

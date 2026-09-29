@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Build data/raw/universe_520.csv from Wikipedia constituent lists.
+
+Source pages (fetched 2026-09-29):
+  - https://en.wikipedia.org/wiki/List_of_S%26P_500_companies      (503 stocks)
+  - https://en.wikipedia.org/wiki/List_of_NASDAQ-100_companies     (101 stocks)
+  - https://en.wikipedia.org/wiki/List_of_Dow_Jones_Industrial_Average_companies (30)
+
+Output columns: ticker, index_membership (pipe-separated SP500|NASDAQ100|DOW).
+Tickers are deduplicated; membership records every index a ticker belongs to.
+"""
+from __future__ import annotations
+
+import csv
+from pathlib import Path
+
+SP500 = """MMM AOS ABT ABBV ACN ADBE AMD AES AFL A APD ABNB AKAM ALB ARE ALGN ALLE
+LNT ALL GOOGL GOOG MO AMZN AMCR AEE AEP AXP AIG AMT AWK AMP AME AMGN APH ADI AON
+APA APO AAPL AMAT APP APTV ACGL ADM ARES ANET AJG AIZ T ATO ADSK ADP AZO AVY AXON
+BKR BALL BAC BAX BDX BRK.B BBY TECH BIIB BLK BX XYZ BE BNY BA BKNG BSX BMY AVGO
+BR BRO BF.B BG BXP CHRW CDNS CPT COF CAH CCL CARR CVNA CASY CAT CBOE CBRE CDW COR
+CNC CNP CF CRL SCHW CHTR CVX CMG CB CHD CIEN CI CINF CTAS CSCO C CFG CLX CME CMS
+KO CTSH COHR COIN CL CMCSA FIX COP ED STZ CEG COO CPRT GLW CPAY CTVA CSGP COST
+CRH CRWD CCI CSX CMI CVS DHR DRI DDOG DVA DECK DE DELL DAL DVN DXCM FANG DLR DG
+DLTR D DPZ DASH DOV DOW DHI DTE DUK DD ETN EBAY ECHO ECL EIX EW ELV EME EMR ETR
+EOG EQT EFX EQIX ERIE ESS EL EG EVRG P ES EXC EXE EXPE EXPD EXR XOM FFIV FDS FICO
+FAST FRT FDX FDXF FERG FIS FITB FSLR FE FISV FLEX F FTNT FTV FOXA FOX BEN FCX GRMN
+IT GE GEHC GEV GEN GNRC GD GIS GM GPC GILD GPN GL GDDY GS HAL HIG HAS HCA DOC
+HSIC HSY HPE HLT HD HONA HON HRL HST HWM HPQ HUBB HUM HBAN HII IBM IEX IDXX ITW
+ILMN INCY IR PODD INTC IBKR ICE IFF IP INTU ISRG IVZ INVH IQV IRM JBHT JBL JKHY J
+JNJ JCI JPM KVUE KDP KEY KEYS KMB KIM KMI KKR KLAC KHC KR LHX LH LRCX LVS LDOS
+LEN LII LLY LIN LYV LMT L LOW LULU LITE LYB MTB MPC MAR MRSH MLM MRVL MAS MA MKC
+MCD MCK MDT MRK META MET MTD MGM MCHP MU MSFT MAA MRNA MDLZ MPWR MNST MCO MS MOS
+MSI MSCI NDAQ NTAP NFLX NEM NWSA NWS NEE NKE NI NDSN NSC NTRS NOC NCLH NRG NUE
+NVDA NVR NXPI ORLY OXY ODFL OMC ON OKE ORCL OTIS PCAR PKG PLTR PANW PSKY PH PAYX
+PYPL PNR PEP PFE PCG PM PSX PNW PNC PPG PPL PFG PG PGR PLD PRU PEG PTC PSA PHM
+PWR QCOM DGX Q RL RJF RDDT RTX O REG REGN RF RSG RMD RVTY HOOD ROK ROL ROP ROST
+RCL SPGI CRM SNDK SBAC SLB STX SRE NOW SHW SPG SWKS SJM SW SNA SOLV SO LUV SWK
+SBUX STT STLD STE SYK SMCI SYF SNPS SYY TMUS TROW TTWO TPR TRGP TGT TEL TDY TER
+TSLA TXN TPL TXT TMO TJX TKO TSCO TT TDG TRV TRMB TFC TYL TSN USB UBER UDR ULTA
+UNP UAL UPS URI UNH UHS VLO VEEV VTR VLTO VRSN VRSK VZ VRTX VRT VTRS VICI V VST
+VMRK VMC WRB GWW WAB WMT DIS WBD WM WAT WEC WFC WELL WST WDC WY WSM WMB WTW WDAY
+WYNN XEL XYL YUM ZBRA ZBH ZTS""".split()
+
+NASDAQ100 = """ADBE AMD ABNB ALNY GOOGL GOOG AMZN AEP AMGN ADI AAPL AMAT APP ARM
+ASML ALAB ADSK ADP AXON BKR BKNG AVGO CDNS CTAS CSCO CCEP CMCSA CEG CPRT CRWV
+COST CRWD CSX DDOG DXCM FANG DASH EXC FAST FER FTNT GEHC GILD HONA HON IDXX INTC
+INTU ISRG KDP KLAC LRCX LIN LITE MAR MRVL MELI META MCHP MU MSFT MSTR MDLZ MPWR
+MNST NBIS NFLX NVDA NXPI ORLY ODFL PCAR PLTR PANW PAYX PYPL PDD PEP QCOM REGN
+RKLB ROP ROST SNDK STX SHOP SPCX SBUX SNPS TMUS TTWO TER TSLA TXN TRI VRTX WMT
+WBD WDC WDAY XEL""".split()
+
+DOW = """MMM GOOGL AXP AMGN AMZN AAPL BA CAT CVX CSCO KO DIS GS HD HON IBM JNJ
+JPM MCD MRK MSFT NKE NVDA PG CRM SHW TRV UNH V WMT""".split()
+
+
+def main() -> None:
+    assert len(SP500) == 503, f"SP500 transcribed {len(SP500)}, want 503"
+    assert len(NASDAQ100) == 101, f"NDX transcribed {len(NASDAQ100)}, want 101"
+    assert len(DOW) == 30, f"DOW transcribed {len(DOW)}, want 30"
+    assert len(set(SP500)) == 503, "dupes inside SP500 list"
+    assert len(set(NASDAQ100)) == 101, "dupes inside NASDAQ100 list"
+    assert len(set(DOW)) == 30, "dupes inside DOW list"
+
+    membership: dict[str, list[str]] = {}
+    for t in SP500:
+        membership.setdefault(t, []).append("SP500")
+    for t in NASDAQ100:
+        membership.setdefault(t, []).append("NASDAQ100")
+    for t in DOW:
+        membership.setdefault(t, []).append("DOW")
+
+    n = len(membership)
+    assert 515 <= n <= 525, f"unique tickers {n} outside 515-525"
+    print(f"SP500=503 NASDAQ100=101 DOW=30 unique={n}")
+
+    out = Path("data/raw/universe_520.csv")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["ticker", "index_membership"])
+        for t in sorted(membership):
+            w.writerow([t, "|".join(membership[t])])
+    print(f"wrote {out} ({n} rows)")
+
+
+if __name__ == "__main__":
+    main()

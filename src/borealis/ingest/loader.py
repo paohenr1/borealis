@@ -4,8 +4,9 @@ The sheet is a stack of per-sector blocks. Each block starts with a header
 row whose first cell is "(n)" and whose third cell names the sector; data
 rows follow until a blank row.
 
-Columns are assigned POSITIONALLY because the sheet reuses names
-("PEG Ratio" and "Trailing Beta" each appear twice: raw metric + sub-rank).
+Columns are assigned POSITIONALLY. The 17-column layout carries the raw
+metrics; any extra trailing columns (e.g. legacy sub-rank columns) are
+ignored so older 27-column exports still load.
 """
 from __future__ import annotations
 
@@ -14,15 +15,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# Positional schema for the 27-column block layout.
+# Positional schema for the 17-column block layout.
 ORDERED_COLS = [
     "n", "i", "company", "ticker", "currency", "last_qtr", "price",
     "market_cap", "high_52w", "low_52w", "pct_below_52w_high",
     "pct_above_52w_low", "ps_ratio", "pe_ratio", "sales_growth_q",
-    "peg_ratio", "trailing_beta", "inovestor_rank",
-    # sub-rank columns (kept for audit, not used in scoring v0.1)
-    "rank_52w_low", "rank_ps", "rank_pe", "rank_sales_growth",
-    "rank_peg", "rank_beta", "rank_inovestor", "total_rank", "rank_of_rank",
+    "peg_ratio", "trailing_beta",
 ]
 
 SECTOR_SLUGS = {
@@ -43,7 +41,7 @@ NUMERIC_COLS = [
     "price", "market_cap", "high_52w", "low_52w",
     "pct_below_52w_high", "pct_above_52w_low",
     "ps_ratio", "pe_ratio", "sales_growth_q", "peg_ratio",
-    "trailing_beta", "inovestor_rank",
+    "trailing_beta",
 ]
 
 
