@@ -25,16 +25,17 @@ from borealis.lab.preprocess import SLEEVES
 # momentum .15: validates (t=3.43/6.09, stronger at 63d); shorter history
 #   (n=67) argues against more.
 # lowvol .10: validates (t=2.84/3.18) but weakest of the validated set.
-# size .05: strong in-sample (t=5.43) but regime-fit; small bet with the
-#   documented flip-back rule.
+# Live composite weights (realigned 2026-09-30; config/factors.yaml).
+# growth 0.00 = documented negative control (still scored every run).
+# yield is not in the live model -- its sleeve is still backtested
+# standalone, but it gets no composite weight.
 SLEEVE_WEIGHTS: dict[str, float] = {
-    "value": 0.15,
     "quality": 0.40,
-    "growth": 0.00,
-    "yield": 0.15,
-    "momentum": 0.15,
+    "momentum": 0.20,
+    "value": 0.20,
     "lowvol": 0.10,
     "size": 0.05,
+    "growth": 0.00,
 }
 
 

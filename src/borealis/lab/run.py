@@ -26,7 +26,7 @@ from borealis.lab import composite as lab_composite
 HORIZONS = {21: "ret_fwd_21d", 63: "ret_fwd_63d"}
 HALF_LIFE_LAGS = halflife.DEFAULT_LAGS
 MIN_VALID_PER_DATE = 200
-PROXY_FACTORS = ["mom_12m1m", "vol_126d"]
+PROXY_FACTORS = ["mom_12m1m", "vol_126d", "beta_252d"]
 
 
 def _jsonable(o):

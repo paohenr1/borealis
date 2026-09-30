@@ -29,6 +29,10 @@ from borealis.scoring.composite import winsorize
 FACTOR_DIRECTION: dict[str, int] = {
     "ev_ebitda": -1,
     "earn_yield": 1,
+    # Live value sleeve (2026-09-30): P/E, P/S, EV/EBITDA, P/B -- lower is
+    # cheaper. earn_yield stays scored for the P/E-vs-earnings-yield
+    # comparison but is no longer in the sleeve (redundant with P/E).
+    "pe": -1, "ps": -1, "pb": -1,
     "roe": 1, "roa": 1, "profit_margin": 1,
     "fcf": 1, "bvps": 1, "asset_turnover": 1,
     "debt_ebitda": -1, "leverage": -1,
@@ -51,17 +55,23 @@ FACTOR_DIRECTION: dict[str, int] = {
     # vol_126d: 126-trading-day annualized std of daily total returns --
     #   lower = more attractive. Winsorized at +/-3 sigma like all factors;
     #   sector-neutral z-scoring keeps the comparison within sectors.
+    # beta_252d (added 2026-09-30): 252-day beta vs SPY -- lower = more
+    #   attractive. This is the live low-vol definition; vol_126d stays
+    #   scored for the head-to-head comparison.
     "mom_12m1m": 1,
     "vol_126d": -1,
+    "beta_252d": -1,
 }
 
 # Factors cut from the scored set 2026-09-28; kept out of composites/reports.
 # Rationale in one line each:
-# pe/pb/ps/ev_ebit/ev_fcff: value-sleeve consolidation to earn_yield+ev_ebitda.
+# ev_ebit/ev_fcff: value-sleeve consolidation to earn_yield+ev_ebitda.
 # ebitda_margin: near-duplicate of profit_margin (|corr| +0.931).
 # market_cap: near-duplicate of enterprise_value (|corr| +0.780).
+# NOTE 2026-09-30: pe/pb/ps were reinstated -- the live value sleeve now
+# uses P/E + P/S + EV/EBITDA + P/B (earn_yield dropped as redundant w/ P/E).
 DROPPED_FACTORS: frozenset[str] = frozenset(
-    {"pe", "pb", "ps", "ev_ebit", "ev_fcff", "ebitda_margin", "market_cap"}
+    {"ev_ebit", "ev_fcff", "ebitda_margin", "market_cap"}
 )
 
 # Ratios where a zero/negative value means missing or negative earnings.
@@ -69,22 +79,28 @@ DROPPED_FACTORS: frozenset[str] = frozenset(
 # Note: earn_yield is deliberately NOT quarantined -- a negative earnings
 # yield is informative (unlike a negative P/E ratio), which is why it beats
 # pe as a value signal.
-QUARANTINE_NONPOSITIVE = frozenset({"ev_ebitda"})
+QUARANTINE_NONPOSITIVE = frozenset({"ev_ebitda", "pe", "ps", "pb"})
 
-# Sleeve -> member factors for the lab composite (added 2026-09-28).
-# Yield is a standalone sleeve: div_yield (t=+5.12) is the 5th-strongest
-# signal and loads on its own PCA axis (PC5); folding it into value would
-# re-concentrate the cheapness exposure the value consolidation just
-# removed. debt_ebitda/leverage sit in quality ("conservatively financed"),
-# matching the workbook pipeline's quality definition.
+# Sleeve -> member factors for the lab composite.
+# Realigned 2026-09-30 to the LIVE model definitions so the rerun validates
+# what actually runs:
+# - value: live 4-metric sleeve (P/E, P/S, EV/EBITDA, P/B). earn_yield
+#   stays individually scored for the P/E-vs-earnings-yield comparison.
+# - quality: live 8-metric sleeve minus gross_margin (not in panel) and
+#   with fcf/leverage standing in for fcf_margin/debt_to_equity (revenue
+#   and debt/equity tags not in panel). bvps/asset_turnover removed --
+#   not in the live model.
+# - lowvol: beta_252d = the live definition (252d beta vs SPY). vol_126d
+#   stays individually scored for the head-to-head.
+# - yield: standalone sleeve (div_yield); not in the live composite.
 SLEEVES: dict[str, list[str]] = {
-    "value": ["earn_yield", "ev_ebitda"],
-    "quality": ["roe", "roa", "profit_margin", "fcf", "bvps",
-                "asset_turnover", "debt_ebitda", "leverage"],
+    "value": ["pe", "ps", "ev_ebitda", "pb"],
+    "quality": ["roe", "roa", "profit_margin", "fcf", "debt_ebitda",
+                "leverage", "interest_coverage"],
     "growth": ["rev_growth", "ebitda_growth", "ebit_growth"],
     "yield": ["div_yield"],
     "momentum": ["mom_12m1m"],
-    "lowvol": ["vol_126d"],
+    "lowvol": ["beta_252d"],
     "size": ["enterprise_value"],
 }
 
