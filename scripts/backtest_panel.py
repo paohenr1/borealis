@@ -50,6 +50,16 @@ def main() -> None:
                     help="use only the last N month-ends (smoke runs)")
     ap.add_argument("--costs", type=float, nargs="*", default=[0.0, 10.0],
                     help="one-way cost levels in bps to run")
+    ap.add_argument("--top-n", type=int, default=None,
+                    help="large-cap-only run: at each month-end keep only the "
+                         "top N tickers by enterprise_value (market_cap "
+                         "fallback). Signals are computed on the full panel "
+                         "first (identical methodology), then rows outside "
+                         "the top-N are dropped.")
+    ap.add_argument("--pre-filter", action="store_true",
+                    help="with --top-n, apply the universe filter BEFORE "
+                         "z-scoring (sector-neutral z within the large-cap "
+                         "universe, as the live model does within its 518).")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -64,7 +74,19 @@ def main() -> None:
           f"({month_ends[0].date()} -> {month_ends[-1].date()})", flush=True)
 
     print("[bt] building signal frame ...", flush=True)
-    sig = pb.build_signal_frame(args.panel, args.prices, month_ends)
+    sig = pb.build_signal_frame(args.panel, args.prices, month_ends,
+                                pre_filter_top_n=(args.top_n
+                                                  if args.pre_filter
+                                                  else None))
+    if args.top_n and not args.pre_filter:
+        elig = pb.large_cap_universe(args.panel, month_ends, args.top_n)
+        n_before = len(sig)
+        sig = sig.merge(elig, on=["date", "ticker"], how="inner")
+        print(f"[bt] large-cap filter: {len(sig):,}/{n_before:,} rows kept "
+              f"(top {args.top_n}/date by EV)", flush=True)
+    elif args.top_n:
+        print(f"[bt] large-cap pre-filter: top {args.top_n}/date by EV, "
+              f"z-scored within universe", flush=True)
     n_sig = int(sig["z_composite"].notna().sum())
     tickers = sorted(sig.loc[sig["z_composite"].notna(), "ticker"].unique())
     print(f"[bt] signal frame: {len(sig):,} rows, {n_sig:,} valid z, "
@@ -72,6 +94,10 @@ def main() -> None:
 
     print("[bt] building price matrix ...", flush=True)
     prices = pb.build_price_matrix(args.panel, tickers)
+    # The filtered ticker set may not cover every panel date (e.g. the
+    # 2021-01-01 holiday); reindex to the full calendar so trade dates
+    # always resolve (same treatment as the broad run).
+    prices = prices.reindex(all_dates)
     print(f"[bt] prices: {prices.shape[0]} days x {prices.shape[1]} tickers",
           flush=True)
 
@@ -180,8 +206,14 @@ def main() -> None:
         "panel": str(args.panel),
         "signal": "z_composite: sleeve-weighted sector-neutral z "
                   "(weights from borealis.lab.composite.SLEEVE_WEIGHTS)",
-        "universe": "tickers with non-NaN z_composite at rebalance "
-                    "(lab universe)",
+        "universe": ("tickers with non-NaN z_composite at rebalance "
+                    "(lab universe)" +
+                    (f"; large-cap filter: top {args.top_n}/date by "
+                     f"enterprise_value (market_cap fallback)" +
+                     (", z-scored within the large-cap universe"
+                      if args.pre_filter
+                      else ", signals computed on full panel first")
+                     if args.top_n else "")),
         "rebalance": "monthly; trade at month-end + 1 trading day "
                      "(t+1 execution)",
         "costs_bps_one_way": list(args.costs),

@@ -33,6 +33,39 @@ from borealis.lab.run import PROXY_FACTORS, load_lab_frame, month_end_dates
 MIN_PX_SENSITIVITY = 5.0
 
 
+def large_cap_universe(panel_dir: str | Path,
+                       month_ends: list[pd.Timestamp],
+                       top_n: int = 1000) -> pd.DataFrame:
+    """Eligible (date, ticker) pairs for a large-cap-only lab run.
+
+    At each month-end, ranks tickers by ``enterprise_value`` (falling back
+    to ``market_cap`` where EV is missing/nonpositive) and keeps the top
+    ``top_n``. The panel is point-in-time, so the values are as known at
+    the rebalance date -- no lookahead. Tickers with neither EV nor market
+    cap (e.g. ETFs like SPY) are excluded; callers that need SPY (regimes)
+    must add it back explicitly.
+    """
+    dataset = ds.dataset(str(panel_dir), format="parquet", partitioning="hive")
+    cols = [c for c in ("ticker", "date", "enterprise_value", "market_cap")
+            if c in dataset.schema.names]
+    table = dataset.to_table(
+        columns=cols,
+        filter=ds.field("date").isin([pd.Timestamp(d) for d in month_ends]),
+    )
+    df = table.to_pandas()
+    df["date"] = pd.to_datetime(df["date"])
+    ev = pd.to_numeric(df["enterprise_value"], errors="coerce")
+    mc = pd.to_numeric(df["market_cap"], errors="coerce")
+    rank_key = ev.where(ev > 0)
+    rank_key = rank_key.fillna(mc.where(mc > 0))
+    df = df.assign(rank_key=rank_key).dropna(subset=["rank_key"])
+    df["rank"] = df.groupby("date")["rank_key"].rank(ascending=False,
+                                                     method="first")
+    elig = df.loc[df["rank"] <= top_n, ["date", "ticker"]].copy()
+    elig["ticker"] = elig["ticker"].astype(str)
+    return elig.reset_index(drop=True)
+
+
 def panel_trading_dates(panel_dir: str | Path) -> list[pd.Timestamp]:
     dataset = ds.dataset(str(panel_dir), format="parquet", partitioning="hive")
     all_dates = sorted(t.as_py() for t in
@@ -43,14 +76,26 @@ def panel_trading_dates(panel_dir: str | Path) -> list[pd.Timestamp]:
 def build_signal_frame(panel_dir: str | Path,
                        prices_path: str | Path,
                        month_ends: list[pd.Timestamp],
-                       factors: list[str] | None = None) -> pd.DataFrame:
-    """One row per (month-end, ticker): z_composite + sleeve z-scores."""
+                       factors: list[str] | None = None,
+                       pre_filter_top_n: int | None = None) -> pd.DataFrame:
+    """One row per (month-end, ticker): z_composite + sleeve z-scores.
+
+    If ``pre_filter_top_n`` is given, the frame is restricted to the
+    top-N tickers by enterprise_value at each month-end BEFORE z-scoring,
+    so sector-neutral z-scores are computed within the large-cap universe
+    (as the live model does within its 518). Without it, z-scores come
+    from the full panel cross-section and any universe filter must be
+    applied afterwards by the caller.
+    """
     panel_dir = Path(panel_dir)
     dataset = ds.dataset(str(panel_dir), format="parquet", partitioning="hive")
     if factors is None:
         factors = preprocess.available_factors(dataset.schema.names)
         factors = factors + [f for f in PROXY_FACTORS if f not in factors]
     frame = load_lab_frame(panel_dir, month_ends, factors, need_returns=False)
+    if pre_filter_top_n is not None:
+        elig = large_cap_universe(panel_dir, month_ends, pre_filter_top_n)
+        frame = frame.merge(elig, on=["date", "ticker"], how="inner")
     proxies = price_proxies.compute_price_proxies(prices_path, month_ends)
     frame = frame.merge(proxies, on=["ticker", "date"], how="left")
     frame = preprocess.add_lab_zscores(frame, factors)

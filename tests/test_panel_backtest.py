@@ -222,5 +222,93 @@ class TestBuildSignalFrameProxies(unittest.TestCase):
                         "sleeve_momentum empty -- mom_12m1m was dropped")
 
 
+class TestLargeCapUniverse(unittest.TestCase):
+    def _panel(self, td):
+        td = Path(td)
+        panel_dir = td / "panel"
+        panel_dir.mkdir(parents=True)
+        rows = [
+            # (date, ticker, enterprise_value, market_cap)
+            ("2020-01-31", "BIG", 100.0, 90.0),
+            ("2020-01-31", "MID", 50.0, 45.0),
+            ("2020-01-31", "SML", 10.0, 9.0),
+            ("2020-01-31", "NOEV", None, 60.0),    # mc fallback -> 2nd
+            ("2020-01-31", "NEGEV", -5.0, 70.0),    # nonpos EV -> mc -> 1st
+            ("2020-01-31", "ETF", None, None),      # excluded entirely
+            ("2020-02-29", "BIG", 100.0, 90.0),
+            ("2020-02-29", "MID", 50.0, 45.0),
+            ("2020-02-29", "SML", 10.0, 9.0),
+        ]
+        df = pd.DataFrame(
+            [{"ticker": t, "date": pd.Timestamp(d),
+              "enterprise_value": ev, "market_cap": mc}
+             for d, t, ev, mc in rows])
+        df.to_parquet(panel_dir / "part.parquet")
+        return panel_dir
+
+    def test_top_n_ranking_with_fallbacks(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            panel = self._panel(td)
+            elig = pb.large_cap_universe(
+                panel, [pd.Timestamp("2020-01-31")], top_n=3)
+            got = sorted(elig["ticker"].tolist())
+            # BIG(100), NEGEV via mc(70), NOEV via mc(60); MID(50) cut
+            self.assertEqual(got, ["BIG", "NEGEV", "NOEV"])
+            self.assertNotIn("ETF", got)
+
+    def test_per_date_and_date_filter(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            panel = self._panel(td)
+            elig = pb.large_cap_universe(
+                panel, [pd.Timestamp("2020-01-31"),
+                        pd.Timestamp("2020-02-29")], top_n=2)
+            by_date = elig.groupby("date")["ticker"].apply(sorted)
+            self.assertEqual(by_date[pd.Timestamp("2020-01-31")],
+                             ["BIG", "NEGEV"])
+            self.assertEqual(by_date[pd.Timestamp("2020-02-29")],
+                             ["BIG", "MID"])
+            # only requested dates appear
+            self.assertEqual(set(elig["date"].unique()),
+                             {pd.Timestamp("2020-01-31"),
+                              pd.Timestamp("2020-02-29")})
+
+    def test_pre_filter_zscores_within_universe(self):
+        # pre_filter_top_n restricts the frame BEFORE z-scoring: only
+        # eligible tickers appear, and z-scores are relative to them.
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            dates = pd.bdate_range("2020-01-01", periods=300)
+            panel_dir = td / "panel"
+            panel_dir.mkdir(parents=True)
+            tickers = ["BIG", "MID", "SML", "TINY"]
+            evs = {"BIG": 100.0, "MID": 50.0, "SML": 10.0, "TINY": 1.0}
+            roes = {"BIG": 0.30, "MID": 0.20, "SML": 0.10, "TINY": 0.01}
+            frow = []
+            for t in tickers:
+                for d in dates:
+                    frow.append({"ticker": t, "date": d, "sector": "Tech",
+                                 "roe": roes[t],
+                                 "enterprise_value": evs[t],
+                                 "market_cap": evs[t]})
+            pd.DataFrame(frow).to_parquet(panel_dir / "part.parquet")
+            prow = []
+            for t in tickers:
+                for d in dates:
+                    prow.append({"ticker": t, "date": d,
+                                 "adj_close": 100.0 + hash(t) % 10})
+            pd.DataFrame(prow).to_parquet(td / "prices.parquet")
+            sig = pb.build_signal_frame(
+                panel_dir, td / "prices.parquet", [dates[-1]],
+                factors=["roe"], pre_filter_top_n=2)
+            got = sorted(sig["ticker"].unique().tolist())
+            self.assertEqual(got, ["BIG", "MID"])
+            # z-scored within the 2-ticker universe: BIG above mean
+            z = sig.set_index("ticker")["sleeve_quality"]
+            self.assertGreater(float(z["BIG"]), float(z["MID"]))
+
+
 if __name__ == "__main__":
     unittest.main()

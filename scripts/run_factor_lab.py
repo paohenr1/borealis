@@ -62,6 +62,18 @@ def main() -> None:
     ap.add_argument("--out", default="data/processed/factor_lab_2026-09-28")
     ap.add_argument("--max-dates", type=int, default=None,
                     help="use only the last N month-ends (smoke runs)")
+    ap.add_argument("--top-n", type=int, default=None,
+                    help="large-cap-only run: at each month-end keep only the "
+                         "top N tickers by enterprise_value (market_cap "
+                         "fallback). Signals are computed on the full panel "
+                         "first (identical methodology), then rows outside "
+                         "the top-N are dropped before backtests/ICs.")
+    ap.add_argument("--pre-filter", action="store_true",
+                    help="with --top-n, apply the universe filter BEFORE "
+                         "z-scoring (sector-neutral z within the large-cap "
+                         "universe, as the live model does within its 518), "
+                         "instead of filtering broad-computed signals at "
+                         "rebalance.")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -77,15 +89,39 @@ def main() -> None:
           f"({month_ends[0].date()} -> {month_ends[-1].date()})", flush=True)
 
     print("[lab] building signal frame ...", flush=True)
-    sig = pb.build_signal_frame(args.panel, args.prices, month_ends)
+    sig = pb.build_signal_frame(args.panel, args.prices, month_ends,
+                                pre_filter_top_n=(args.top_n
+                                                  if args.pre_filter
+                                                  else None))
+    if args.top_n and not args.pre_filter:
+        elig = pb.large_cap_universe(args.panel, month_ends, args.top_n)
+        n_before = len(sig)
+        sig = sig.merge(elig, on=["date", "ticker"], how="inner")
+        print(f"[lab] large-cap filter: {len(sig):,}/{n_before:,} rows kept "
+              f"(top {args.top_n}/date by EV)", flush=True)
+    elif args.top_n:
+        print(f"[lab] large-cap pre-filter: top {args.top_n}/date by EV, "
+              f"z-scored within universe", flush=True)
     zcols = [f"sleeve_{s}" for s in sleeve_names]
     tickers = sorted(sig.loc[sig[zcols].notna().any(axis=1),
                              "ticker"].unique())
+    if args.top_n and "SPY" not in tickers:
+        # SPY has no EV/market-cap (ETF) so the filter drops it; the
+        # regime section needs its price column. It carries no signal
+        # rows, so backtests are unaffected.
+        tickers = sorted(set(tickers) | {"SPY"})
+        print("[lab] SPY re-added to price matrix for regimes",
+              flush=True)
     print(f"[lab] signal frame: {len(sig):,} rows, "
           f"{len(tickers):,} tickers", flush=True)
 
     print("[lab] building price matrix ...", flush=True)
     prices = pb.build_price_matrix(args.panel, tickers)
+    # The filtered ticker set may not cover every panel date (e.g. the
+    # 2021-01-01 holiday); reindex to the full calendar so trade dates
+    # always resolve. All-NaN rows behave exactly as they did for these
+    # tickers in the broad run (gap exit-fill 0.0 / flat period).
+    prices = prices.reindex(all_dates)
     print(f"[lab] prices: {prices.shape[0]} days x {prices.shape[1]} tickers",
           flush=True)
 
@@ -232,8 +268,14 @@ def main() -> None:
                 "delist 0.0 (gap) / -0.3 (permanent, Shumway 1997), 1/99 "
                 "holding-return winsorization; sleeve weights NOT used "
                 "(each sleeve tested standalone)",
-        "universe": "per sleeve: tickers with non-NaN sleeve z at "
-                    "rebalance (own coverable universe)",
+        "universe": ("per sleeve: tickers with non-NaN sleeve z at "
+                     "rebalance (own coverable universe)" +
+                     (f"; large-cap filter: top {args.top_n}/date by "
+                      f"enterprise_value (market_cap fallback)" +
+                      (", z-scored within the large-cap universe"
+                       if args.pre_filter
+                       else ", signals computed on full panel first")
+                      if args.top_n else "")),
         "regimes": "SPY trailing 21d return sign (up/down); trailing 63d "
                    "realized vol vs median (high/low vol); no VIX in bulk "
                    "data so realized vol is the documented proxy",

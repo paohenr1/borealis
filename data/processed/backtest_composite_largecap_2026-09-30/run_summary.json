@@ -1,0 +1,73 @@
+{
+ "delist_incidence": 0.013016992625841616,
+ "n_trade_dates": 80,
+ "n_tickers": 1540,
+ "full_0bps": {
+  "periods": 80,
+  "ann_return": 0.05328180045958125,
+  "ann_vol": 0.12219486725986352,
+  "sharpe": 0.43603959523332897,
+  "max_drawdown": -0.2503868917771812,
+  "avg_turnover_ls": 0.31807422645431915,
+  "hit_rate": 0.55,
+  "cumulative": 0.35622904452005066
+ },
+ "full_10bps": {
+  "periods": 80,
+  "ann_return": 0.04946490974212944,
+  "ann_vol": 0.1222816316740575,
+  "sharpe": 0.40451627169956716,
+  "max_drawdown": -0.2548926263760689,
+  "avg_turnover_ls": 0.31807422645431915,
+  "hit_rate": 0.5375,
+  "cumulative": 0.32216056592870945
+ },
+ "full_10bps_delist100": {
+  "periods": 80,
+  "ann_return": 0.04980917719573042,
+  "ann_vol": 0.12212926759239884,
+  "sharpe": 0.40783980922547086,
+  "max_drawdown": -0.2548926263760689,
+  "avg_turnover_ls": 0.31807422645431915,
+  "hit_rate": 0.5375,
+  "cumulative": 0.32535103797621767
+ },
+ "px5_10bps": {
+  "periods": 80,
+  "ann_return": 0.05078250004218881,
+  "ann_vol": 0.12409190081111622,
+  "sharpe": 0.4092329935334481,
+  "max_drawdown": -0.26898295088830715,
+  "avg_turnover_ls": 0.317622424856359,
+  "hit_rate": 0.5625,
+  "cumulative": 0.3319776872713158
+ },
+ "longonly_Q5_vs_bench_10bps": {
+  "ann_active_return": 0.16219188750292274,
+  "ann_tracking_error": 0.39155838065065734,
+  "information_ratio": 0.41422146866938847,
+  "bench_ann_return": -0.03534264463916696,
+  "q5_ann_return": 0.12382306451409127
+ },
+ "composite_ic_21d": {
+  "mean": 0.008690197346598741,
+  "tstat": 0.6071435090929761,
+  "hit_rate": 0.5189873417721519,
+  "n": 79
+ },
+ "config": {
+  "generated": "2026-09-30T13:14:40+00:00",
+  "panel": "data/processed/intrinio/panel",
+  "signal": "z_composite: sleeve-weighted sector-neutral z (weights from borealis.lab.composite.SLEEVE_WEIGHTS)",
+  "universe": "tickers with non-NaN z_composite at rebalance (lab universe); large-cap filter: top 1000/date by enterprise_value (market_cap fallback), signals computed on full panel first",
+  "rebalance": "monthly; trade at month-end + 1 trading day (t+1 execution)",
+  "costs_bps_one_way": [
+   0.0,
+   10.0
+  ],
+  "delist_treatment": "missing exit price: 0.0 if ticker trades again later (data gap / ticker change, ~76% of cases), -0.3 if permanently delisted (Shumway 1997); full_10bps_delist100 reruns with -1.0 as the conservative bound",
+  "holding_return_winsorization": "per-period cross-sectional 1/99 (corrupt adjusted-price defense; e.g. CDT 2023-11 adj_close 1.1e8)",
+  "spread_cost_accounting": "dollar-neutral L/S pays one-way costs on BOTH legs: net spread = gross(Q5-Q1) - (turnover_Q5+turnover_Q1)*cost",
+  "prices": "adj_close (split+dividend adjusted, total return)"
+ }
+}
