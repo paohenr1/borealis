@@ -1,7 +1,8 @@
 """Live universe builder: workbook-compatible frame from Intrinio bulk files.
 
-Builds the same 19-column frame as ``loader.load_universe()`` plus the three
-quality columns (``roe``, ``fcf_margin``, ``debt_to_equity``), for the ~520
+Builds the same 19-column frame as ``loader.load_universe()`` plus the seven
+quality columns (``roe``, ``roa``, ``gross_margin``, ``profit_margin``,
+``fcf_margin``, ``debt_to_equity``, ``debt_to_ebitda``), for the ~520
 index-constituent tickers in ``data/raw/universe_520.csv``, sourced from the
 Intrinio bulk products (US Stock Prices 5yr, US Fundamentals 5yr, US Company
 Metadata) under ``data/raw/intrinio/<date>/``.
@@ -114,6 +115,10 @@ DIRECT_TAGS: dict[str, list[str]] = {
     "ps_ratio": ["pricetorevenue"],
     "peg_ratio": ["peg_ratio", "pegratio"],   # absent -> NaN (documented)
     "roe": ["roe"],
+    "roa": ["roa"],
+    "gross_margin": ["grossmargin"],
+    "profit_margin": ["profitmargin"],
+    "debt_to_ebitda": ["debttoebitda"],
     "freecashflow": ["freecashflow"],
     "beta": ["beta"],                        # absent -> regression fallback
     "debt_to_equity": ["debttoequity"],
@@ -129,7 +134,8 @@ WORKBOOK_COLS = [
     "pct_above_52w_low", "ps_ratio", "pe_ratio", "sales_growth_q",
     "peg_ratio", "trailing_beta", "sector_raw", "sector",
 ]
-QUALITY_COLS = ["roe", "fcf_margin", "debt_to_equity"]
+QUALITY_COLS = ["roe", "roa", "gross_margin", "profit_margin",
+                "fcf_margin", "debt_to_equity", "debt_to_ebitda"]
 LIVE_COLS = WORKBOOK_COLS + QUALITY_COLS
 
 # Intrinio INDUSTRY_GROUP_NAME -> workbook sector slug (152 groups, verified
@@ -655,6 +661,10 @@ def build_live_universe(universe_csv: str | Path,
     frame["ps_ratio"] = tag("ps_ratio")
     frame["peg_ratio"] = tag("peg_ratio")  # NaN: no vendor tag (documented)
     frame["roe"] = tag("roe")
+    frame["roa"] = tag("roa")
+    frame["gross_margin"] = tag("gross_margin")
+    frame["profit_margin"] = tag("profit_margin")
+    frame["debt_to_ebitda"] = tag("debt_to_ebitda")
 
     fcf = pd.to_numeric(tag("freecashflow"), errors="coerce")
     trev = pd.to_numeric(frame["ttm_revenue"], errors="coerce")

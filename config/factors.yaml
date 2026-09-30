@@ -16,11 +16,15 @@ factors:
       ps_ratio:  {direction: lower_better, missing: sector_median}
   quality:
     weight: 0.40
-    description: "Profitable, cash-generative, conservatively financed (TODO: needs ROE/FCF data)"
+    description: "Profitable, cash-generative, conservatively financed (7 metrics since 2026-09-29)"
     metrics:
       roe:            {direction: higher_better, missing: sector_median}
+      roa:            {direction: higher_better, missing: sector_median}
+      gross_margin:   {direction: higher_better, missing: sector_median}
+      profit_margin:  {direction: higher_better, missing: sector_median}
       fcf_margin:     {direction: higher_better, missing: sector_median}
       debt_to_equity: {direction: lower_better,  missing: sector_median}
+      debt_to_ebitda: {direction: lower_better,  missing: sector_median}
   growth:
     weight: 0.00
     description: "Negative control: zero-weighted since 2026-09-29; still evaluated every run to document that the lab kills dead factors (Sharpe 0.07 in the 2026-09-28 lab)"
