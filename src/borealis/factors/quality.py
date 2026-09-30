@@ -28,6 +28,7 @@ QUALITY_METRICS = {
     "fcf_margin": True,
     "debt_to_equity": False,
     "debt_to_ebitda": False,
+    "interest_coverage": True,  # financial health: EBIT / interest expense
 }
 
 

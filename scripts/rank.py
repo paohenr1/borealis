@@ -80,6 +80,7 @@ def main() -> None:
         df["growth"] = factors.growth.growth_score(df)
         df["momentum"] = factors.momentum.momentum_score(df)
         df["lowvol"] = factors.lowvol.lowvol_score(df)
+        df["size"] = factors.size.size_score(df)
 
         weights = {f: c["weight"] for f, c in fcfg["factors"].items()}
         scored = scoring.composite.composite_score(

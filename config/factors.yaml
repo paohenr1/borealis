@@ -19,20 +19,28 @@ factors:
       pb_ratio:     {direction: lower_better, missing: sector_median}
   quality:
     weight: 0.40
-    description: "Profitable, cash-generative, conservatively financed (7 metrics since 2026-09-29)"
+    description: "Profitable, cash-generative, conservatively financed (7 metrics since 2026-09-29; interest coverage added 2026-09-29)"
     metrics:
-      roe:            {direction: higher_better, missing: sector_median}
-      roa:            {direction: higher_better, missing: sector_median}
-      gross_margin:   {direction: higher_better, missing: sector_median}
-      profit_margin:  {direction: higher_better, missing: sector_median}
-      fcf_margin:     {direction: higher_better, missing: sector_median}
-      debt_to_equity: {direction: lower_better,  missing: sector_median}
-      debt_to_ebitda: {direction: lower_better,  missing: sector_median}
+      roe:               {direction: higher_better, missing: sector_median}
+      roa:               {direction: higher_better, missing: sector_median}
+      gross_margin:      {direction: higher_better, missing: sector_median}
+      profit_margin:     {direction: higher_better, missing: sector_median}
+      fcf_margin:        {direction: higher_better, missing: sector_median}
+      debt_to_equity:    {direction: lower_better,  missing: sector_median}
+      debt_to_ebitda:    {direction: lower_better,  missing: sector_median}
+      interest_coverage: {direction: higher_better, missing: sector_median}
+  size:
+    weight: 0.05
+    description: "REGIME-DEPENDENT: log enterprise value, larger = better per the 2020-2026 mega-cap regime (lab IC +0.0593, t+5.43). Flip back to smaller-is-better if the trailing-12m size IC turns positive with the academic orientation; revisit at least annually"
+    metrics:
+      enterprise_value: {direction: higher_better, missing: sector_median}
   growth:
     weight: 0.00
-    description: "Negative control: zero-weighted since 2026-09-29; still evaluated every run to document that the lab kills dead factors (Sharpe 0.07 in the 2026-09-28 lab)"
+    description: "Negative control: zero-weighted since 2026-09-29; still evaluated every run to document that the lab kills dead factors (Sharpe 0.07 in the 2026-09-28 lab). Retested 2026-09-29 with the lab's TTM definitions (rev/ebit/ebitda growth -- all insignificant: rev_growth IC -0.0017, ebitda_growth t+0.90, ebit_growth t+1.59)"
     metrics:
-      sales_growth_q: {direction: higher_better, missing: sector_median}
+      rev_growth:    {direction: higher_better, missing: sector_median}
+      ebit_growth:   {direction: higher_better, missing: sector_median}
+      ebitda_growth: {direction: higher_better, missing: sector_median}
   momentum:
     weight: 0.20
     description: "12-1 trailing return on the live path (52-week-low proxy on the workbook path, which has no price history)"

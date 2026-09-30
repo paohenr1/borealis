@@ -119,8 +119,13 @@ DIRECT_TAGS: dict[str, list[str]] = {
     "gross_margin": ["grossmargin"],
     "profit_margin": ["profitmargin"],
     "debt_to_ebitda": ["debttoebitda"],
+    "interest_coverage": ["ebittointerestex"],
     "ev_to_ebitda": ["evtoebitda"],
     "pb_ratio": ["pricetobook"],
+    "enterprise_value": ["enterprisevalue"],
+    "ebit_growth": ["ebitgrowth"],
+    "ebitda_growth": ["ebitdagrowth"],
+    "rev_growth": ["revenuegrowth"],
     "freecashflow": ["freecashflow"],
     "beta": ["beta"],                        # absent -> regression fallback
     "debt_to_equity": ["debttoequity"],
@@ -137,10 +142,14 @@ WORKBOOK_COLS = [
     "peg_ratio", "trailing_beta", "sector_raw", "sector",
 ]
 QUALITY_COLS = ["roe", "roa", "gross_margin", "profit_margin",
-                "fcf_margin", "debt_to_equity", "debt_to_ebitda"]
+                "fcf_margin", "debt_to_equity", "debt_to_ebitda",
+                "interest_coverage"]
 MOMENTUM_COLS = ["mom_12_1"]
 VALUE_COLS = ["ev_to_ebitda", "pb_ratio"]
-LIVE_COLS = WORKBOOK_COLS + QUALITY_COLS + MOMENTUM_COLS + VALUE_COLS
+SIZE_COLS = ["enterprise_value"]
+GROWTH_COLS = ["ebit_growth", "ebitda_growth", "rev_growth"]
+LIVE_COLS = (WORKBOOK_COLS + QUALITY_COLS + MOMENTUM_COLS + VALUE_COLS
+             + SIZE_COLS + GROWTH_COLS)
 
 # Intrinio INDUSTRY_GROUP_NAME -> workbook sector slug (152 groups, verified
 # against the 2026-09-29 bulk for the live universe; see module docstring).
@@ -716,8 +725,13 @@ def build_live_universe(universe_csv: str | Path,
     trev = pd.to_numeric(frame["ttm_revenue"], errors="coerce")
     frame["fcf_margin"] = (fcf / trev).where(fcf.notna() & trev.notna() & (trev != 0))
     frame["debt_to_equity"] = tag("debt_to_equity")
+    frame["interest_coverage"] = tag("interest_coverage")
     frame["ev_to_ebitda"] = tag("ev_to_ebitda")
     frame["pb_ratio"] = tag("pb_ratio")
+    frame["enterprise_value"] = tag("enterprise_value")
+    frame["ebit_growth"] = tag("ebit_growth")
+    frame["ebitda_growth"] = tag("ebitda_growth")
+    frame["rev_growth"] = tag("rev_growth")
 
     adj = _load_adj_closes(raw_dir, set(keep), snap_date)
     if tags.get("beta") is not None:

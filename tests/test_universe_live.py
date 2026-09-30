@@ -56,14 +56,18 @@ def _calc_rows():
          "evtoebitda": 12.0, "pricetobook": 3.0,
          "roe": 0.18, "roa": 0.08, "grossmargin": 45.0, "profitmargin": 18.0,
          "freecashflow": 1e8, "totalrevenue": 5e8,
-         "revenuegrowth": 0.12, "beta": 1.1, "debttoequity": 0.5, "debttoebitda": 1.2},
+         "revenuegrowth": 0.12, "ebitgrowth": 0.15, "ebitdagrowth": 0.10,
+         "enterprisevalue": 5e10, "ebittointerestex": 8.0,
+         "beta": 1.1, "debttoequity": 0.5, "debttoebitda": 1.2},
         {"ticker": "BBB", "filing_date": "2026-09-20", "first_calculable_at": "2026-09-21",
          "fiscal_period": "Q2TTM", "fiscal_year": 2026, "marketcap": 2e9,
          "pricetoearnings": 25.0, "pricetorevenue": 5.0, "peg_ratio": 2.0,
          "evtoebitda": 10.0, "pricetobook": 2.0,
          "roe": 0.10, "roa": 0.05, "grossmargin": 35.0, "profitmargin": 10.0,
          "freecashflow": 5e7, "totalrevenue": 5e8,
-         "revenuegrowth": 0.05, "beta": 0.9, "debttoequity": 1.2, "debttoebitda": 2.0},
+         "revenuegrowth": 0.05, "ebitgrowth": 0.03, "ebitdagrowth": 0.04,
+         "enterprisevalue": 2e10, "ebittointerestex": 4.0,
+         "beta": 0.9, "debttoequity": 1.2, "debttoebitda": 2.0},
         # older vintage for CCC must lose to the newer one
         {"ticker": "CCC", "filing_date": "2026-06-20", "first_calculable_at": "2026-06-21",
          "fiscal_period": "Q1TTM", "fiscal_year": 2026, "marketcap": 3e9,
@@ -210,6 +214,11 @@ class TestBuildLiveUniverse(unittest.TestCase):
         self.assertAlmostEqual(aaa["gross_margin"], 45.0)
         self.assertAlmostEqual(aaa["ev_to_ebitda"], 12.0)
         self.assertAlmostEqual(aaa["pb_ratio"], 3.0)
+        self.assertAlmostEqual(aaa["enterprise_value"], 5e10)
+        self.assertAlmostEqual(aaa["interest_coverage"], 8.0)
+        self.assertAlmostEqual(aaa["ebit_growth"], 0.15)
+        self.assertAlmostEqual(aaa["ebitda_growth"], 0.10)
+        self.assertAlmostEqual(aaa["rev_growth"], 0.12)
 
     def test_every_row_has_price_and_sector(self):
         frame, _ = self._build()
