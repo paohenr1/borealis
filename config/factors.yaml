@@ -3,16 +3,17 @@
 # missing: how missing/invalid values are handled (sector median imputation).
 # Sleeve weights set 2026-09-28 from the factor-efficacy lab + correlation/PCA
 # (reports/factor_efficacy_20260928.md, reports/factor_correlation_pca_20260928.md).
-# Metric-level recommendations (value consolidation, redundancy drops, size
-# orientation) target the Intrinio panel pipeline; see the reports.
+# Revised 2026-09-29: PEG removed from value (no vendor data), growth set to
+# zero weight as a negative control, low-vol trimmed per the lab's down-weight
+# verdict. Metric-level recommendations (value consolidation, redundancy drops,
+# size orientation) target the Intrinio panel pipeline; see the reports.
 factors:
   value:
     weight: 0.20
-    description: "Cheap on earnings, sales, and growth-adjusted earnings"
+    description: "Cheap on earnings and sales (PEG removed 2026-09-29: no vendor data)"
     metrics:
       pe_ratio:  {direction: lower_better, missing: sector_median}
       ps_ratio:  {direction: lower_better, missing: sector_median}
-      peg_ratio: {direction: lower_better, missing: sector_median}
   quality:
     weight: 0.40
     description: "Profitable, cash-generative, conservatively financed (TODO: needs ROE/FCF data)"
@@ -21,8 +22,8 @@ factors:
       fcf_margin:     {direction: higher_better, missing: sector_median}
       debt_to_equity: {direction: lower_better,  missing: sector_median}
   growth:
-    weight: 0.05
-    description: "Trailing quarterly sales growth"
+    weight: 0.00
+    description: "Negative control: zero-weighted since 2026-09-29; still evaluated every run to document that the lab kills dead factors (Sharpe 0.07 in the 2026-09-28 lab)"
     metrics:
       sales_growth_q: {direction: higher_better, missing: sector_median}
   momentum:
@@ -31,8 +32,8 @@ factors:
     metrics:
       pct_above_52w_low: {direction: higher_better, missing: sector_median}
   lowvol:
-    weight: 0.15
-    description: "Lower trailing beta preferred"
+    weight: 0.10
+    description: "Lower trailing beta preferred (trimmed 2026-09-29 per lab down-weight verdict)"
     metrics:
       trailing_beta: {direction: lower_better, missing: sector_median}
 
