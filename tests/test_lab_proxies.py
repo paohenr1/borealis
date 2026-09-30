@@ -132,14 +132,17 @@ def test_expected_sleeves_present():
 # ---------- composite ----------
 
 def test_sleeve_weights_valid():
-    # weights need not sum to 1: composite_zscore renormalizes per ticker,
-    # and sleeves can carry 0 weight as documented negative controls
-    # (growth) or live outside the composite (yield is standalone).
+    # weights need not sum to 1: composite_zscore renormalizes per ticker.
+    # Zero-weight taxonomy (2026-09-30): diagnostics (quality, size -- each
+    # with a reinstatement rule), falsified belief (growth -- kept for
+    # transparency, no reinstatement path), negative control (noise -- null
+    # by construction). Yield lives outside the composite (standalone).
     w = lab_composite.SLEEVE_WEIGHTS
     assert set(w) <= set(SLEEVES)
     assert all(v >= 0 for v in w.values())
     assert sum(w.values()) > 0
-    assert w["growth"] == 0  # documented negative control
+    assert w["growth"] == 0  # falsified belief, not a negative control
+    assert w["noise"] == 0  # negative control: null by construction
     # 2026-09-30 sleeve decisions: quality and size zeroed but still scored
     assert w["quality"] == 0
     assert w["size"] == 0
@@ -169,7 +172,8 @@ def test_zero_weight_sleeves_still_scored_not_in_composite():
     assert "sleeve_size" in sz.columns
     assert sz["sleeve_quality"].tolist() == pytest.approx([1.0, -1.0])
     # ...but the composite ignores them
-    w = dict(lab_composite.SLEEVE_WEIGHTS)
+    w = {k: v for k, v in lab_composite.SLEEVE_WEIGHTS.items()
+         if k in sleeves}
     c1 = lab_composite.composite_zscore(frame, sleeves=sleeves, weights=w)
     frame2 = frame.copy()
     frame2["z_roe"] = [5.0, -5.0]  # quality z moves a lot

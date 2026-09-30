@@ -4,10 +4,14 @@
 # Sleeve weights set 2026-09-28 from the factor-efficacy lab + correlation/PCA
 # (reports/factor_efficacy_20260928.md, reports/factor_correlation_pca_20260928.md).
 # Revised 2026-09-29: PEG removed from value (no vendor data), growth set to
-# zero weight as a negative control, low-vol trimmed per the lab's down-weight
-# verdict; then the build-out batch: quality 3->7 metrics, real 12-1 momentum,
-# value +EV/EBITDA+P/B. Metric-level recommendations (size orientation)
-# target the Intrinio panel pipeline; see the reports.
+# zero weight (falsified belief, kept for transparency), low-vol trimmed per
+# the lab's down-weight verdict; then the build-out batch: quality 3->7 metrics,
+# real 12-1 momentum, value +EV/EBITDA+P/B. Metric-level recommendations
+# (size orientation) target the Intrinio panel pipeline; see the reports.
+# 2026-09-30: zero-weight taxonomy -- diagnostics (quality, size: scored every
+# run, each with a written reinstatement rule), falsified belief (growth:
+# scored every run for transparency, no reinstatement path), negative control
+# (noise: seeded Gaussian, null by construction, validates the lab machinery).
 factors:
   value:
     weight: 0.20
@@ -36,11 +40,14 @@ factors:
       enterprise_value: {direction: higher_better, missing: sector_median}
   growth:
     weight: 0.00
-    description: "Negative control: zero-weighted since 2026-09-29; still evaluated every run to document that the lab kills dead factors (Sharpe 0.07 in the 2026-09-28 lab). Retested 2026-09-29 with the lab's TTM definitions (rev/ebit/ebitda growth -- all insignificant: rev_growth IC -0.0017, ebitda_growth t+0.90, ebit_growth t+1.59)"
+    description: "FALSIFIED BELIEF (since 2026-09-30): growth is widely believed to drive equity returns -- that is why its failure stays visible. Tested and rejected: rev_growth IC -0.0017, ebitda_growth t +0.90, ebit_growth t +1.59 (none near significance across all three TTM definitions). Scored every run for transparency so the lab's failures stay on display. NOT a candidate and NOT a negative control: no reinstatement rule; re-promotion would require a new documented research decision. (Seeded noise is the true negative control.)"
     metrics:
       rev_growth:    {direction: higher_better, missing: sector_median}
       ebit_growth:   {direction: higher_better, missing: sector_median}
       ebitda_growth: {direction: higher_better, missing: sector_median}
+  noise:
+    weight: 0.00
+    description: "NEGATIVE CONTROL (since 2026-09-30): seeded Gaussian noise, null by construction (factors/noise.py -- seed derived from date string plus fixed salt, deterministic per date, independent draw per ticker). Its IC should hover near zero on every run. If it ever clears |t| > 2, distrust the lab machinery, not the market. Scored every run; never enters the composite."
   momentum:
     weight: 0.20
     description: "12-1 trailing return on the live path (52-week-low proxy on the workbook path, which has no price history)"

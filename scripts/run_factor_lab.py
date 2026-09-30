@@ -102,7 +102,9 @@ def main() -> None:
     elif args.top_n:
         print(f"[lab] large-cap pre-filter: top {args.top_n}/date by EV, "
               f"z-scored within universe", flush=True)
-    zcols = [f"sleeve_{s}" for s in sleeve_names]
+    # Noise is never NaN (null by construction), so it must not count toward
+    # ticker eligibility -- only sleeves carrying real signal admit tickers.
+    zcols = [f"sleeve_{s}" for s in sleeve_names if s != "noise"]
     tickers = sorted(sig.loc[sig[zcols].notna().any(axis=1),
                              "ticker"].unique())
     if args.top_n and "SPY" not in tickers:

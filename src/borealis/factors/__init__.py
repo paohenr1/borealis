@@ -1,5 +1,5 @@
 """Factor library. Each module exposes a `<name>_score(df) -> pd.Series`
 oriented so HIGHER = more attractive."""
-from borealis.factors import value, quality, growth, momentum, lowvol, size
+from borealis.factors import value, quality, growth, momentum, lowvol, size, noise
 
-__all__ = ["value", "quality", "growth", "momentum", "lowvol", "size"]
+__all__ = ["value", "quality", "growth", "momentum", "lowvol", "size", "noise"]

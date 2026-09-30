@@ -68,6 +68,11 @@ FACTOR_DIRECTION: dict[str, int] = {
     "mom_12m1m": 1,
     "vol_126d": -1,
     "beta_252d": -1,
+    # Negative control (added 2026-09-30): seeded Gaussian noise, null by
+    # construction (factors/noise.py). Direction is moot; +1 keeps the
+    # orientation machinery happy. Injected into the lab frame (not a panel
+    # column) by panel_backtest.build_signal_frame.
+    "noise_raw": 1,
 }
 
 # Factors cut from the scored set 2026-09-28; kept out of composites/reports.
@@ -120,6 +125,10 @@ SLEEVES: dict[str, list[str]] = {
     "momentum": ["mom_12m1m"],
     "lowvol": ["vol_126d"],
     "size": ["enterprise_value"],
+    # Negative control (2026-09-30): seeded noise, null by construction.
+    # Picked up by every lab routine (IC, horizons, backtests, regimes)
+    # like any other sleeve; weight 0.00, never in the composite.
+    "noise": ["noise_raw"],
 }
 
 UNKNOWN_SECTOR = "unknown"

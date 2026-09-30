@@ -28,6 +28,7 @@ import pandas as pd
 import pyarrow.dataset as ds
 
 from borealis.backtest.engine import BacktestConfig, BacktestResult, run_backtest
+from borealis.factors import noise as factor_noise
 from borealis.lab import composite as lab_composite
 from borealis.lab import preprocess, price_proxies
 from borealis.lab.run import PROXY_FACTORS, load_lab_frame, month_end_dates
@@ -100,7 +101,11 @@ def build_signal_frame(panel_dir: str | Path,
         frame = frame.merge(elig, on=["date", "ticker"], how="inner")
     proxies = price_proxies.compute_price_proxies(prices_path, month_ends)
     frame = frame.merge(proxies, on=["ticker", "date"], how="left")
-    frame = preprocess.add_lab_zscores(frame, factors)
+    # Negative control: seeded noise, null by construction. Injected here
+    # (not a panel column) so it is z-scored within (date, sector) exactly
+    # like every other factor before sleeve aggregation.
+    frame = factor_noise.add_noise_raw(frame)
+    frame = preprocess.add_lab_zscores(frame, factors + ["noise_raw"])
     frame["z_composite"] = lab_composite.composite_zscore(frame)
     sleeve_z = lab_composite.sleeve_zscores(frame)
     return pd.concat([frame[["date", "ticker", "z_composite"]], sleeve_z],

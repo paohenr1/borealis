@@ -30,7 +30,11 @@ from borealis.lab.preprocess import SLEEVES
 # size 0.00 = scored every run; the flip-back rule (trailing-12m size IC
 #   positive in the academic orientation -> smaller-is-better; annual
 #   review) is its reinstatement path. Failed natively on large caps.
-# growth 0.00 = documented negative control (still scored every run).
+# growth 0.00 = FALSIFIED BELIEF (2026-09-30): widely believed to drive
+#   returns, tested and rejected; scored every run for transparency. NOT a
+#   candidate and NOT a negative control -- no reinstatement rule.
+# noise 0.00 = NEGATIVE CONTROL (2026-09-30): seeded Gaussian, null by
+#   construction; validates the lab machinery (see factors/noise.py).
 # yield is not in the live model -- its sleeve is still backtested
 # standalone, but it gets no composite weight.
 SLEEVE_WEIGHTS: dict[str, float] = {
@@ -40,6 +44,7 @@ SLEEVE_WEIGHTS: dict[str, float] = {
     "lowvol": 0.10,
     "size": 0.00,
     "growth": 0.00,
+    "noise": 0.00,
 }
 
 

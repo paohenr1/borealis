@@ -4,12 +4,16 @@ Prefers the lab's TTM growth set -- revenue, EBIT and EBITDA growth --
 when the live feed carries them. Falls back to the quarterly
 sales/eps growth columns on the workbook path, which has no TTM feed.
 
-ZERO-WEIGHT NEGATIVE CONTROL (since 2026-09-29): the factor lab measured
-all three TTM growth rates as weak (rev_growth IC -0.0017, ebitda_growth
-t +0.90, ebit_growth t +1.59 -- none near significance). The sleeve is
-scored every run so its z_growth can be audited, but it carries no
-composite weight until a lab rerun on the panel validates a version of
-it. Do not restore weight on the basis of a single in-sample window.
+ZERO-WEIGHT FALSIFIED BELIEF (since 2026-09-30): growth is widely believed
+to drive equity returns, which is exactly why its failure is worth
+keeping visible. The lab measured all three TTM growth rates as weak
+(rev_growth IC -0.0017, ebitda_growth t +0.90, ebit_growth t +1.59 --
+none near significance). The sleeve is scored every run for transparency
+-- the lab reports its failures, not just its successes -- but it is NOT
+a candidate: there is no reinstatement rule, and re-promotion would
+require a new documented research decision. (It was briefly labeled a
+"negative control"; that was wrong -- a control must be null by
+construction. Seeded noise in factors/noise.py is the true control.)
 """
 from __future__ import annotations
 
