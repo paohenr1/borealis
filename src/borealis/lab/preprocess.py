@@ -28,11 +28,12 @@ from borealis.scoring.composite import winsorize
 #    market_cap dropped (keep enterprise_value, |corr| +0.780).
 FACTOR_DIRECTION: dict[str, int] = {
     "ev_ebitda": -1,
-    "earn_yield": 1,
-    # Live value sleeve (2026-09-30): P/E, P/S, EV/EBITDA, P/B -- lower is
-    # cheaper. earn_yield stays scored for the P/E-vs-earnings-yield
-    # comparison but is no longer in the sleeve (redundant with P/E).
-    "pe": -1, "ps": -1, "pb": -1,
+    # Live value sleeve (2026-09-30): earnings yield, P/S, EV/EBITDA, P/B.
+    # P/E was replaced by earnings yield (decision 2026-09-30): EY = 1/P/E,
+    # same economic information, but P/E explodes near zero earnings and
+    # poisons the winsorize/z-score pipeline. pe stays scored individually
+    # as a diagnostic.
+    "earn_yield": 1, "pe": -1, "ps": -1, "pb": -1,
     "roe": 1, "roa": 1, "profit_margin": 1,
     # Exact live quality metrics (added 2026-09-30): gross_margin from the
     # INDU calculations template (NaN for financials, sector-imputed like
@@ -60,9 +61,10 @@ FACTOR_DIRECTION: dict[str, int] = {
     # vol_126d: 126-trading-day annualized std of daily total returns --
     #   lower = more attractive. Winsorized at +/-3 sigma like all factors;
     #   sector-neutral z-scoring keeps the comparison within sectors.
+    #   The LIVE low-vol definition since the 2026-09-30 sleeve decisions.
     # beta_252d (added 2026-09-30): 252-day beta vs SPY -- lower = more
-    #   attractive. This is the live low-vol definition; vol_126d stays
-    #   scored for the head-to-head comparison.
+    #   attractive. Was the live low-vol definition until the 2026-09-30
+    #   decisions; rejected on both universes, now scored as a diagnostic.
     "mom_12m1m": 1,
     "vol_126d": -1,
     "beta_252d": -1,
@@ -73,8 +75,10 @@ FACTOR_DIRECTION: dict[str, int] = {
 # ev_ebit/ev_fcff: value-sleeve consolidation to earn_yield+ev_ebitda.
 # ebitda_margin: near-duplicate of profit_margin (|corr| +0.931).
 # market_cap: near-duplicate of enterprise_value (|corr| +0.780).
-# NOTE 2026-09-30: pe/pb/ps were reinstated -- the live value sleeve now
-# uses P/E + P/S + EV/EBITDA + P/B (earn_yield dropped as redundant w/ P/E).
+# NOTE 2026-09-30: pe/pb/ps were reinstated for the live value sleeve on
+# 2026-09-30-morning (P/E + P/S + EV/EBITDA + P/B); that afternoon Henry
+# decided to replace P/E with earnings yield (same information, better
+# behaved in the z-score pipeline). pe stays scored as a diagnostic.
 DROPPED_FACTORS: frozenset[str] = frozenset(
     {"ev_ebit", "ev_fcff", "ebitda_margin", "market_cap"}
 )
@@ -87,26 +91,34 @@ DROPPED_FACTORS: frozenset[str] = frozenset(
 QUARANTINE_NONPOSITIVE = frozenset({"ev_ebitda", "pe", "ps", "pb"})
 
 # Sleeve -> member factors for the lab composite.
-# Realigned 2026-09-30 to the LIVE model definitions so the rerun validates
-# what actually runs:
-# - value: live 4-metric sleeve (P/E, P/S, EV/EBITDA, P/B). earn_yield
-#   stays individually scored for the P/E-vs-earnings-yield comparison.
+# Realigned 2026-09-30 to Henry's five sleeve decisions:
+# - value: P/E replaced by earnings yield (1/P/E, same economic information;
+#   P/E explodes near zero earnings and poisons the winsorize/z-score
+#   pipeline; EY is bounded and well-behaved). pe stays scored individually
+#   as a diagnostic.
 # - quality: EXACT live 8-metric sleeve (2026-09-30 panel extension):
 #   roe, roa, gross_margin, profit_margin, fcf_margin (= fcf / revenue),
 #   debt_to_equity, debt_ebitda, interest_coverage. Raw fcf / leverage
 #   remain scored individually as diagnostics. bvps/asset_turnover removed
-#   -- not in the live model.
-# - lowvol: beta_252d = the live definition (252d beta vs SPY). vol_126d
-#   stays individually scored for the head-to-head.
+#   -- not in the live model. Weight 0.00 (decision 2026-09-30): scored
+#   every run as a diagnostic with a reinstatement rule (see
+#   factors/quality.py).
+# - lowvol: vol_126d = 126-day realized volatility (decision 2026-09-30).
+#   beta_252d stays individually scored as a diagnostic; it was rejected on
+#   both universes (broad -9.35%/yr, large-cap -7.8%/yr, worst exactly when
+#   low-vol should protect).
+# - size: weight 0.00 (decision 2026-09-30); the flip-back rule
+#   (trailing-12m size IC positive -> smaller-is-better; annual review) is
+#   its reinstatement path.
 # - yield: standalone sleeve (div_yield); not in the live composite.
 SLEEVES: dict[str, list[str]] = {
-    "value": ["pe", "ps", "ev_ebitda", "pb"],
+    "value": ["earn_yield", "ps", "ev_ebitda", "pb"],
     "quality": ["roe", "roa", "gross_margin", "profit_margin", "fcf_margin",
                 "debt_to_equity", "debt_ebitda", "interest_coverage"],
     "growth": ["rev_growth", "ebitda_growth", "ebit_growth"],
     "yield": ["div_yield"],
     "momentum": ["mom_12m1m"],
-    "lowvol": ["beta_252d"],
+    "lowvol": ["vol_126d"],
     "size": ["enterprise_value"],
 }
 

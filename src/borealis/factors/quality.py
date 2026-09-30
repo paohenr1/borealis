@@ -6,6 +6,18 @@ within sector. Expanded 2026-09-29 from 3 to 7 metrics on the Intrinio
 live path; the workbook path still supplies only roe/fcf_margin/
 debt_to_equity and degrades gracefully on the rest.
 
+ZERO-WEIGHT DIAGNOSTIC (decision 2026-09-30): the exact 8-metric sleeve
+validates strongly on the broad panel (21d IC +0.0393, t=5.17) but is
+dead on large caps (IC ~0; all 8 individual metrics t<1.3 with 81-100%
+coverage -- a real universe effect, not a data artifact; see
+scripts/quality_largecap_diagnostic.py). It is still scored every run so
+its z_quality can be audited, but it carries no composite weight.
+
+REINSTATEMENT RULE (following the size flip-back template in
+factors/size.py): quality returns to the engine when its LARGE-CAP
+trailing-12-month IC turns positive with t > 2. Revisit at least
+annually. Never reinstate on the basis of a single window.
+
 Known wart: parts are averaged raw, so larger-scale metrics (gross_margin
 in percent) weigh more than small-scale ones (fcf_margin as a decimal).
 Kept as-is to preserve comparability with the factor lab evidence

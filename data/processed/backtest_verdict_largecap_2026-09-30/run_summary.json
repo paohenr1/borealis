@@ -1,0 +1,111 @@
+{
+ "delist_incidence": 0.013033083982416904,
+ "n_trade_dates": 80,
+ "n_tickers": 1538,
+ "full_0bps": {
+  "periods": 80,
+  "ann_return": 0.050854397911718044,
+  "ann_vol": 0.1553785783990499,
+  "sharpe": 0.32729349460973706,
+  "max_drawdown": -0.3533460229769646,
+  "avg_turnover_ls": 0.3487929921877669,
+  "hit_rate": 0.575,
+  "cumulative": 0.29236042783539107
+ },
+ "full_10bps": {
+  "periods": 80,
+  "ann_return": 0.04666888200546482,
+  "ann_vol": 0.15552427080045736,
+  "sharpe": 0.3000745913500697,
+  "max_drawdown": -0.3587715200087708,
+  "avg_turnover_ls": 0.3487929921877669,
+  "hit_rate": 0.5625,
+  "cumulative": 0.25668521794841026
+ },
+ "full_10bps_delist100": {
+  "periods": 80,
+  "ann_return": 0.04700980418424109,
+  "ann_vol": 0.15582500091086604,
+  "sharpe": 0.3016833236608246,
+  "max_drawdown": -0.3587715200087708,
+  "avg_turnover_ls": 0.3487929921877669,
+  "hit_rate": 0.5625,
+  "cumulative": 0.25915857038746837
+ },
+ "px5_10bps": {
+  "periods": 80,
+  "ann_return": 0.05235732776796867,
+  "ann_vol": 0.1537668814545459,
+  "sharpe": 0.3404980791227512,
+  "max_drawdown": -0.3537514950946077,
+  "avg_turnover_ls": 0.3519921065313782,
+  "hit_rate": 0.5625,
+  "cumulative": 0.30793574781047717
+ },
+ "longonly_Q5_capweight_vs_spy_10bps": {
+  "periods": 79,
+  "ann_return": 0.11110034547678614,
+  "ann_vol": 0.19312348296597165,
+  "sharpe": 0.5752813887286924,
+  "max_drawdown": -0.2798645088713656,
+  "max_dd_peak": "2020-02-03T00:00:00",
+  "max_dd_trough": "2020-03-02T00:00:00",
+  "max_dd_recovered": "2020-11-02T00:00:00",
+  "avg_turnover_oneway": 0.29527594305866145,
+  "hit_rate": 0.5949367088607594,
+  "spy_ann_return": 0.16069275395715268,
+  "ann_active_return": -0.04959240848036655,
+  "ann_tracking_error": 0.07260669070861288,
+  "information_ratio": -0.68302807904291,
+  "hit_rate_vs_spy": 0.43037974683544306,
+  "cumulative": 0.8226530845699376,
+  "cumulative_active": -0.2915117921124366
+ },
+ "longonly_Q5_vs_spy_10bps": {
+  "periods": 79,
+  "ann_return": 0.12334583498544886,
+  "ann_vol": 0.22102483319609192,
+  "sharpe": 0.5580632420431109,
+  "max_drawdown": -0.34555716624359956,
+  "max_dd_peak": "2020-02-03T00:00:00",
+  "max_dd_trough": "2020-03-02T00:00:00",
+  "max_dd_recovered": "2020-11-02T00:00:00",
+  "avg_turnover_oneway": 0.21895407392660265,
+  "hit_rate": 0.5822784810126582,
+  "spy_ann_return": 0.16069275395715268,
+  "ann_active_return": -0.03734691897170384,
+  "ann_tracking_error": 0.09987970896626164,
+  "information_ratio": -0.37391898072429564,
+  "hit_rate_vs_spy": 0.4810126582278481,
+  "cumulative": 0.8869129926638162,
+  "cumulative_active": -0.24418912322282638
+ },
+ "longonly_Q5_vs_bench_10bps": {
+  "ann_active_return": 0.004692461556726013,
+  "ann_tracking_error": 0.06195819005549017,
+  "information_ratio": 0.07573593664571887,
+  "bench_ann_return": 0.11865337342872284,
+  "q5_ann_return": 0.12004521050241707
+ },
+ "composite_ic_21d": {
+  "mean": -0.0023426714280316645,
+  "tstat": -0.13087943606972532,
+  "hit_rate": 0.6075949367088608,
+  "n": 79
+ },
+ "config": {
+  "generated": "2026-09-30T16:21:33+00:00",
+  "panel": "data/processed/intrinio/panel",
+  "signal": "z_composite: sleeve-weighted sector-neutral z (weights from borealis.lab.composite.SLEEVE_WEIGHTS)",
+  "universe": "tickers with non-NaN z_composite at rebalance (lab universe); large-cap filter: top 1000/date by enterprise_value (market_cap fallback), z-scored within the large-cap universe",
+  "rebalance": "monthly; trade at month-end + 1 trading day (t+1 execution)",
+  "costs_bps_one_way": [
+   0.0,
+   10.0
+  ],
+  "delist_treatment": "missing exit price: 0.0 if ticker trades again later (data gap / ticker change, ~76% of cases), -0.3 if permanently delisted (Shumway 1997); full_10bps_delist100 reruns with -1.0 as the conservative bound",
+  "holding_return_winsorization": "per-period cross-sectional 1/99 (corrupt adjusted-price defense; e.g. CDT 2023-11 adj_close 1.1e8)",
+  "spread_cost_accounting": "dollar-neutral L/S pays one-way costs on BOTH legs: net spread = gross(Q5-Q1) - (turnover_Q5+turnover_Q1)*cost",
+  "prices": "adj_close (split+dividend adjusted, total return)"
+ }
+}

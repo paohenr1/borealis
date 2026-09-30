@@ -161,11 +161,21 @@ def test_dropped_factors_absent_from_universe():
 
 
 def test_value_sleeve_is_four_metrics():
-    value_factors = {"pe", "ps", "ev_ebitda", "pb"}
+    # 2026-09-30 sleeve decisions: P/E replaced by earnings yield (same
+    # information, better-behaved in the z-score pipeline).
+    value_factors = {"earn_yield", "ps", "ev_ebitda", "pb"}
     assert value_factors <= set(preprocess.FACTOR_DIRECTION)
     assert value_factors == set(preprocess.SLEEVES["value"])
-    assert not ({"earn_yield", "ev_ebit", "ev_fcff"}
-                & set(preprocess.SLEEVES["value"]))
+    assert not ({"ev_ebit", "ev_fcff"} & set(preprocess.SLEEVES["value"]))
+    # pe stays scored individually as a diagnostic
+    assert "pe" in preprocess.FACTOR_DIRECTION
+
+
+def test_lowvol_sleeve_is_realized_vol():
+    # 2026-09-30 sleeve decisions: beta_252d rejected on both universes;
+    # the live low-vol definition is 126-day realized vol.
+    assert preprocess.SLEEVES["lowvol"] == ["vol_126d"]
+    assert "beta_252d" in preprocess.FACTOR_DIRECTION  # diagnostic
 
 
 def test_size_orientation_flipped_regime_dependent():

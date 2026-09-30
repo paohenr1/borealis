@@ -140,6 +140,42 @@ def test_sleeve_weights_valid():
     assert all(v >= 0 for v in w.values())
     assert sum(w.values()) > 0
     assert w["growth"] == 0  # documented negative control
+    # 2026-09-30 sleeve decisions: quality and size zeroed but still scored
+    assert w["quality"] == 0
+    assert w["size"] == 0
+    assert w["value"] == 0.20 and w["momentum"] == 0.20 and w["lowvol"] == 0.10
+
+
+def test_zero_weight_sleeves_still_scored_not_in_composite():
+    # quality/size carry no composite weight but sleeve_zscores still
+    # computes them every run (diagnostics with reinstatement rules).
+    frame = pd.DataFrame({
+        "z_roe": [1.0, -1.0], "z_mom_12m1m": [0.5, 0.5],
+        "z_earn_yield": [0.2, 0.2], "z_ps": [0.2, 0.2],
+        "z_ev_ebitda": [0.2, 0.2], "z_pb": [0.2, 0.2],
+        "z_vol_126d": [0.1, 0.1], "z_enterprise_value": [0.3, 0.3],
+        "z_rev_growth": [0.0, 0.0],
+    })
+    sleeves = {
+        "value": ["earn_yield", "ps", "ev_ebitda", "pb"],
+        "quality": ["roe"],
+        "momentum": ["mom_12m1m"],
+        "lowvol": ["vol_126d"],
+        "size": ["enterprise_value"],
+        "growth": ["rev_growth"],
+    }
+    sz = lab_composite.sleeve_zscores(frame, sleeves=sleeves)
+    assert "sleeve_quality" in sz.columns
+    assert "sleeve_size" in sz.columns
+    assert sz["sleeve_quality"].tolist() == pytest.approx([1.0, -1.0])
+    # ...but the composite ignores them
+    w = dict(lab_composite.SLEEVE_WEIGHTS)
+    c1 = lab_composite.composite_zscore(frame, sleeves=sleeves, weights=w)
+    frame2 = frame.copy()
+    frame2["z_roe"] = [5.0, -5.0]  # quality z moves a lot
+    frame2["z_enterprise_value"] = [9.0, -9.0]
+    c2 = lab_composite.composite_zscore(frame2, sleeves=sleeves, weights=w)
+    assert c1.tolist() == pytest.approx(c2.tolist())
 
 
 def test_composite_zscore_weighted_mean():

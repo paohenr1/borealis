@@ -1,0 +1,111 @@
+{
+ "delist_incidence": 0.027930780739915124,
+ "n_trade_dates": 80,
+ "n_tickers": 17120,
+ "full_0bps": {
+  "periods": 80,
+  "ann_return": 0.09710474653750104,
+  "ann_vol": 0.12482511079247162,
+  "sharpe": 0.7779263797245318,
+  "max_drawdown": -0.25814826880289754,
+  "avg_turnover_ls": 0.3754233339639836,
+  "hit_rate": 0.6625,
+  "cumulative": 0.8064935754383904
+ },
+ "full_10bps": {
+  "periods": 80,
+  "ann_return": 0.09259966652993323,
+  "ann_vol": 0.12491433575827345,
+  "sharpe": 0.7413053591312884,
+  "max_drawdown": -0.26315579356249696,
+  "avg_turnover_ls": 0.3754233339639836,
+  "hit_rate": 0.6625,
+  "cumulative": 0.7532563020483072
+ },
+ "full_10bps_delist100": {
+  "periods": 80,
+  "ann_return": 0.09840244236452192,
+  "ann_vol": 0.12539659900539432,
+  "sharpe": 0.7847297545947705,
+  "max_drawdown": -0.25849373791516606,
+  "avg_turnover_ls": 0.3754233339639836,
+  "hit_rate": 0.675,
+  "cumulative": 0.8211955272042755
+ },
+ "px5_10bps": {
+  "periods": 80,
+  "ann_return": 0.07041504198251186,
+  "ann_vol": 0.12240004814800426,
+  "sharpe": 0.5752860644087907,
+  "max_drawdown": -0.2678842687979145,
+  "avg_turnover_ls": 0.38507236064443157,
+  "hit_rate": 0.6125,
+  "cumulative": 0.5170940887514064
+ },
+ "longonly_Q5_capweight_vs_spy_10bps": {
+  "periods": 79,
+  "ann_return": 0.07673830126509429,
+  "ann_vol": 0.22463939166668825,
+  "sharpe": 0.34160661091424155,
+  "max_drawdown": -0.3221540788745636,
+  "max_dd_peak": "2020-02-03T00:00:00",
+  "max_dd_trough": "2020-03-02T00:00:00",
+  "max_dd_recovered": "2020-11-02T00:00:00",
+  "avg_turnover_oneway": 0.4407093265560143,
+  "hit_rate": 0.569620253164557,
+  "spy_ann_return": 0.16069275395715268,
+  "ann_active_return": -0.08395445269205838,
+  "ann_tracking_error": 0.10358843526943884,
+  "information_ratio": -0.8104616357384735,
+  "hit_rate_vs_spy": 0.3924050632911392,
+  "cumulative": 0.3886770110702904,
+  "cumulative_active": -0.44616883146037756
+ },
+ "longonly_Q5_vs_spy_10bps": {
+  "periods": 79,
+  "ann_return": 0.0272075029473359,
+  "ann_vol": 0.18649415677706266,
+  "sharpe": 0.1458893051531908,
+  "max_drawdown": -0.32602475843956236,
+  "max_dd_peak": "2020-02-03T00:00:00",
+  "max_dd_trough": "2020-03-02T00:00:00",
+  "max_dd_recovered": "2020-07-01T00:00:00",
+  "avg_turnover_oneway": 0.20915720255084835,
+  "hit_rate": 0.5569620253164557,
+  "spy_ann_return": 0.16069275395715268,
+  "ann_active_return": -0.13348525100981679,
+  "ann_tracking_error": 0.10628710857954016,
+  "information_ratio": -1.255893144462791,
+  "hit_rate_vs_spy": 0.34177215189873417,
+  "cumulative": 0.05550576791246509,
+  "cumulative_active": -0.6021386719454838
+ },
+ "longonly_Q5_vs_bench_10bps": {
+  "ann_active_return": -0.012606878409453444,
+  "ann_tracking_error": 0.0828437318960323,
+  "information_ratio": -0.15217661156639944,
+  "bench_ann_return": 0.03981438135678936,
+  "q5_ann_return": 0.025894225324537584
+ },
+ "composite_ic_21d": {
+  "mean": 0.040753256414123716,
+  "tstat": 2.4713182845058177,
+  "hit_rate": 0.6582278481012658,
+  "n": 79
+ },
+ "config": {
+  "generated": "2026-09-30T16:25:17+00:00",
+  "panel": "data/processed/intrinio/panel",
+  "signal": "z_composite: sleeve-weighted sector-neutral z (weights from borealis.lab.composite.SLEEVE_WEIGHTS)",
+  "universe": "tickers with non-NaN z_composite at rebalance (lab universe)",
+  "rebalance": "monthly; trade at month-end + 1 trading day (t+1 execution)",
+  "costs_bps_one_way": [
+   0.0,
+   10.0
+  ],
+  "delist_treatment": "missing exit price: 0.0 if ticker trades again later (data gap / ticker change, ~76% of cases), -0.3 if permanently delisted (Shumway 1997); full_10bps_delist100 reruns with -1.0 as the conservative bound",
+  "holding_return_winsorization": "per-period cross-sectional 1/99 (corrupt adjusted-price defense; e.g. CDT 2023-11 adj_close 1.1e8)",
+  "spread_cost_accounting": "dollar-neutral L/S pays one-way costs on BOTH legs: net spread = gross(Q5-Q1) - (turnover_Q5+turnover_Q1)*cost",
+  "prices": "adj_close (split+dividend adjusted, total return)"
+ }
+}

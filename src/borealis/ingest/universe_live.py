@@ -79,7 +79,19 @@ never invented or substituted):
     trailing_beta    <- NO VENDOR TAG in the bulk -> 252-trading-day OLS
                         regression beta of daily log returns on split/
                         dividend-adjusted closes vs SPY, from the price bulk.
-                        NaN if SPY/history insufficient.
+                        NaN if SPY/history insufficient. DIAGNOSTIC ONLY
+                        since the 2026-09-30 sleeve decisions (rejected on
+                        both universes); the live low-vol sleeve uses
+                        vol_126d below.
+    vol_126d         <- 126-trading-day realized volatility: sample std
+                        (ddof=1) of daily simple returns on adjusted closes,
+                        annualized x sqrt(252). Same definition as the lab's
+                        vol_126d proxy. LIVE low-vol definition since
+                        2026-09-30.
+    earn_yield       <- 1 / pe_ratio (derived, not a vendor tag). Replaces
+                        P/E in the live value sleeve 2026-09-30: same
+                        economic information in the better-behaved form.
+                        Negative EY kept (informative); pe == 0 -> NaN.
     roe              <- roe (TTM calculation)
     fcf_margin       <- freecashflow (TTM, "Free Cash Flow to Firm") /
                         TTM revenue, where TTM revenue = sum of the latest 4
@@ -145,11 +157,12 @@ QUALITY_COLS = ["roe", "roa", "gross_margin", "profit_margin",
                 "fcf_margin", "debt_to_equity", "debt_to_ebitda",
                 "interest_coverage"]
 MOMENTUM_COLS = ["mom_12_1"]
-VALUE_COLS = ["ev_to_ebitda", "pb_ratio"]
+LOWVOL_COLS = ["vol_126d"]  # live low-vol since 2026-09-30 (trailing_beta stays as diagnostic)
+VALUE_COLS = ["ev_to_ebitda", "pb_ratio", "earn_yield"]  # earn_yield replaces pe_ratio 2026-09-30
 SIZE_COLS = ["enterprise_value"]
 GROWTH_COLS = ["ebit_growth", "ebitda_growth", "rev_growth"]
-LIVE_COLS = (WORKBOOK_COLS + QUALITY_COLS + MOMENTUM_COLS + VALUE_COLS
-             + SIZE_COLS + GROWTH_COLS)
+LIVE_COLS = (WORKBOOK_COLS + QUALITY_COLS + MOMENTUM_COLS + LOWVOL_COLS
+             + VALUE_COLS + SIZE_COLS + GROWTH_COLS)
 
 # Intrinio INDUSTRY_GROUP_NAME -> workbook sector slug (152 groups, verified
 # against the 2026-09-29 bulk for the live universe; see module docstring).
@@ -367,6 +380,7 @@ def _explode_to_universe(df: pd.DataFrame, rev: dict[str, list[str]],
 
 
 _BETA_WINDOW = 252  # trading days for the fallback beta regression
+_VOL_WINDOW = 126   # trading days for realized-vol low-vol (live since 2026-09-30)
 
 
 # ---------------------------------------------------------------------------
@@ -641,6 +655,33 @@ def _beta_from_adj(closes: dict[str, pd.Series], tickers: set[str]) -> pd.Series
     return pd.Series(out, name="trailing_beta")
 
 
+def _vol_from_adj(closes: dict[str, pd.Series], tickers: set[str]) -> pd.Series:
+    """126-day realized volatility from pre-loaded adjusted closes.
+
+    Sample std (ddof=1) of daily simple total returns over the trailing
+    126 trading days, annualized x sqrt(252) -- the same definition as the
+    lab's vol_126d proxy (lab/price_proxies.py). The LIVE low-vol sleeve
+    definition since Henry's 2026-09-30 sleeve decisions (replacing the
+    252d beta, which was rejected on both universes). Lower = calmer.
+    NaN where history is short or the bad-tick quarantine trips.
+    """
+    out = {}
+    for t in tickers:
+        s = closes.get(t)
+        if s is None:
+            out[t] = np.nan
+            continue
+        w = s.tail(_VOL_WINDOW + 1)
+        if _has_bad_tick(w):
+            warnings.warn(f"[universe_live] {t}: bad tick in window; vol_126d -> NaN")
+            out[t] = np.nan
+            continue
+        r = w.pct_change().dropna().tail(_VOL_WINDOW)
+        if len(r) < _VOL_WINDOW:
+            out[t] = np.nan
+        else:
+            out[t] = float(r.std(ddof=1) * np.sqrt(252))
+    return pd.Series(out, name="vol_126d")
 _MOM_LOOKBACK = 252  # trading days
 _MOM_SKIP = 21       # skip the most recent month (standard 12-1)
 
@@ -713,6 +754,13 @@ def build_live_universe(universe_csv: str | Path,
 
     frame["market_cap"] = tag("market_cap")
     frame["pe_ratio"] = tag("pe_ratio")
+    # earn_yield = 1 / pe_ratio (live value sleeve since the 2026-09-30
+    # sleeve decisions; replaces pe_ratio, which stays as a diagnostic).
+    # Same economic information as P/E in the better-behaved form: P/E
+    # explodes near zero earnings and poisons the z-score pipeline.
+    # Negative EY is informative and kept; pe == 0 -> NaN (never ranked).
+    _pe = pd.to_numeric(frame["pe_ratio"], errors="coerce")
+    frame["earn_yield"] = (1.0 / _pe).where(_pe.notna() & (_pe != 0))
     frame["ps_ratio"] = tag("ps_ratio")
     frame["peg_ratio"] = tag("peg_ratio")  # NaN: no vendor tag (documented)
     frame["roe"] = tag("roe")
@@ -739,6 +787,9 @@ def build_live_universe(universe_csv: str | Path,
     else:
         warnings.warn("[universe_live] no beta tag in bulk; using 252d regression beta vs SPY")
         frame["trailing_beta"] = frame["ticker"].map(_beta_from_adj(adj, set(keep)))
+    # trailing_beta stays in the frame as a diagnostic; the live low-vol
+    # sleeve uses vol_126d since the 2026-09-30 decisions.
+    frame["vol_126d"] = frame["ticker"].map(_vol_from_adj(adj, set(keep)))
     frame["mom_12_1"] = frame["ticker"].map(_momentum_from_adj(adj, set(keep)))
 
     frame["last_qtr"] = frame["last_qtr"].where(frame["last_qtr"].notna(), np.nan)

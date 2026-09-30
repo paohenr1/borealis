@@ -16,25 +16,29 @@ import pandas as pd
 
 from borealis.lab.preprocess import SLEEVES
 
-# Final weights (revised 2026-09-28 after the momentum/lowvol validation;
-# see reports/factor_momentum_lowvol_20260928.md). One-line rationale each:
-# quality .40: strongest sleeve (t=5.88), 8 genuinely diversified metrics.
-# value .15: consolidated sleeve validates (t=3.70) but components modest.
-# growth .00: three consecutive |t|<2 readings -- cut the toe-hold.
-# yield .15: t=5.12, standalone PCA axis, earns a full sleeve.
-# momentum .15: validates (t=3.43/6.09, stronger at 63d); shorter history
-#   (n=67) argues against more.
-# lowvol .10: validates (t=2.84/3.18) but weakest of the validated set.
-# Live composite weights (realigned 2026-09-30; config/factors.yaml).
+# (Historical note: weights revised 2026-09-28 after the momentum/lowvol
+# validation; see reports/factor_momentum_lowvol_20260928.md. Superseded
+# by the 2026-09-30 sleeve decisions below.)
+# Live composite weights (Henry's five sleeve decisions, 2026-09-30).
+# Raw: value .20, momentum .20, lowvol(126d) .10, quality .00, size .00,
+# growth .00. Per-ticker renormalization of available nonzero weights
+# makes the effective mix 0.40/0.40/0.20 (value/momentum/lowvol) for a
+# fully-covered ticker.
+# quality 0.00 = scored every run as a diagnostic with a reinstatement
+#   rule (see factors/quality.py); dead on large caps (IC~0, all 8 metrics
+#   t<1.3) despite broad-panel validation.
+# size 0.00 = scored every run; the flip-back rule (trailing-12m size IC
+#   positive in the academic orientation -> smaller-is-better; annual
+#   review) is its reinstatement path. Failed natively on large caps.
 # growth 0.00 = documented negative control (still scored every run).
 # yield is not in the live model -- its sleeve is still backtested
 # standalone, but it gets no composite weight.
 SLEEVE_WEIGHTS: dict[str, float] = {
-    "quality": 0.40,
+    "quality": 0.00,
     "momentum": 0.20,
     "value": 0.20,
     "lowvol": 0.10,
-    "size": 0.05,
+    "size": 0.00,
     "growth": 0.00,
 }
 

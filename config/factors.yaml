@@ -11,15 +11,15 @@
 factors:
   value:
     weight: 0.20
-    description: "Cheap on earnings, sales, EV/EBITDA and book (PEG removed 2026-09-29: no vendor data; earnings yield skipped as P/E's reciprocal)"
+    description: "Cheap on earnings yield, sales, EV/EBITDA and book (2026-09-30: P/E replaced by earnings yield = 1/P/E -- same economic information, but P/E explodes near zero earnings and poisons the z-score pipeline; pe_ratio stays in the frame as a diagnostic. PEG removed 2026-09-29: no vendor data)"
     metrics:
-      pe_ratio:     {direction: lower_better, missing: sector_median}
+      earn_yield:   {direction: higher_better, missing: sector_median}
       ps_ratio:     {direction: lower_better, missing: sector_median}
       ev_to_ebitda: {direction: lower_better, missing: sector_median}
       pb_ratio:     {direction: lower_better, missing: sector_median}
   quality:
-    weight: 0.40
-    description: "Profitable, cash-generative, conservatively financed (7 metrics since 2026-09-29; interest coverage added 2026-09-29)"
+    weight: 0.00
+    description: "ZERO-WEIGHT DIAGNOSTIC since 2026-09-30: exact 8-metric sleeve validates on the broad panel (21d IC +0.039, t=5.2) but is dead on large caps (IC~0, all 8 metrics t<1.3). Scored every run. REINSTATEMENT: returns when its large-cap trailing-12m IC turns positive with t > 2; review at least annually; never on a single window"
     metrics:
       roe:               {direction: higher_better, missing: sector_median}
       roa:               {direction: higher_better, missing: sector_median}
@@ -30,8 +30,8 @@ factors:
       debt_to_ebitda:    {direction: lower_better,  missing: sector_median}
       interest_coverage: {direction: higher_better, missing: sector_median}
   size:
-    weight: 0.05
-    description: "REGIME-DEPENDENT: log enterprise value, larger = better per the 2020-2026 mega-cap regime (lab IC +0.0593, t+5.43). Flip back to smaller-is-better if the trailing-12m size IC turns positive with the academic orientation; revisit at least annually"
+    weight: 0.00
+    description: "ZERO-WEIGHT since 2026-09-30: failed natively on large caps (-1.4%/yr; the broad +11.2%/yr was 'avoid microcap junk'). Scored every run. REINSTATEMENT (flip-back rule): if the trailing-12m size IC turns positive with the academic orientation, flip back to smaller-is-better; revisit at least annually"
     metrics:
       enterprise_value: {direction: higher_better, missing: sector_median}
   growth:
@@ -48,9 +48,9 @@ factors:
       mom_12_1: {direction: higher_better, missing: sector_median}
   lowvol:
     weight: 0.10
-    description: "Lower trailing beta preferred (trimmed 2026-09-29 per lab down-weight verdict)"
+    description: "126-day realized volatility, lower = better (reverted 2026-09-30: the 252d-beta definition was rejected on both universes, worst exactly when low-vol should protect; trailing_beta stays in the frame as a diagnostic)"
     metrics:
-      trailing_beta: {direction: lower_better, missing: sector_median}
+      vol_126d: {direction: lower_better, missing: sector_median}
 
 scoring:
   winsorize_sigma: 3.0

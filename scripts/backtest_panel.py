@@ -177,32 +177,54 @@ def main() -> None:
           f"sharpe={summ_px['sharpe']:+.2f} maxDD={summ_px['max_drawdown']:.2%}",
           flush=True)
 
-    # --- PRIMARY: long-only Q5 vs SPY (10bps one-way, long side only) ---
-    # The L/S spread machinery above is kept as a diagnostic; the
-    # long-only leg is the production evaluation. Shorting is cut:
-    # the short book was unshortable junk and its modeled costs fiction
-    # (drawdown autopsy 2026-09-30).
+    # --- PRIMARY: cap-weighted long-only Q5 vs SPY (10bps one-way) ---
+    # Henry's 2026-09-30 sleeve decisions: the Q5 leg is cap-weighted so the
+    # active return vs SPY measures the ranking's edge, not a structural
+    # equal-weight-vs-cap-weight bet (which cost -4.22%/yr in the baseline).
+    # The equal-weight Q5 is kept below as a diagnostic for comparison.
+    # The L/S spread machinery above is kept as a diagnostic; the long-only
+    # leg is the production evaluation. Shorting is cut: the short book was
+    # unshortable junk and its modeled costs fiction (drawdown autopsy
+    # 2026-09-30).
     res_lo = runs[10.0]
+    exit_fill = pb.build_exit_fill(prices, trade_dates)
+    cap_mat = pb.cap_weight_frame(args.panel, month_ends, tickers)
+    q5cw_net, q5cw_turn = pb.cap_weighted_q5(
+        prices, sig_mat, trade_dates, cap_mat, cost_bps=10.0,
+        exit_fill=exit_fill, winsorize_hold=(0.01, 0.99))
+    spy = pb.spy_benchmark(args.panel, trade_dates)
+    q5cw_net.to_csv(out / "longonly_Q5_capweight_net_10bps.csv", header=True)
+    (q5cw_net - spy).dropna().to_csv(
+        out / "longonly_Q5_capweight_active_vs_spy_10bps.csv", header=True)
+    lo_cw = pb.summarize_longonly(q5cw_net, q5cw_turn, spy)
+    results["longonly_Q5_capweight_vs_spy_10bps"] = lo_cw
+    print(f"[bt] PRIMARY cap-weighted LONG-ONLY Q5 vs SPY: "
+          f"ann_ret={lo_cw['ann_return']:+.2%} "
+          f"active={lo_cw['ann_active_return']:+.2%} "
+          f"TE={lo_cw['ann_tracking_error']:.2%} "
+          f"IR={lo_cw['information_ratio']:+.2f} "
+          f"maxDD={lo_cw['max_drawdown']:.2%} "
+          f"(peak {lo_cw['max_dd_peak'][:10] if lo_cw['max_dd_peak'] else 'n/a'} -> "
+          f"trough {lo_cw['max_dd_trough'][:10] if lo_cw['max_dd_trough'] else 'n/a'}) "
+          f"turnover={lo_cw['avg_turnover_oneway']:.2f}", flush=True)
+
+    # --- diagnostic: equal-weight long-only Q5 vs SPY (kept for comparison)
     q5_net = res_lo.quantile_returns["Q5"]
     q5_turn = res_lo.turnover["Q5"]
-    spy = pb.spy_benchmark(args.panel, trade_dates)
     q5_net.to_csv(out / "longonly_Q5_net_10bps.csv", header=True)
     (q5_net - spy).dropna().to_csv(out / "longonly_Q5_active_vs_spy_10bps.csv",
                                    header=True)
     lo = pb.summarize_longonly(q5_net, q5_turn, spy)
     results["longonly_Q5_vs_spy_10bps"] = lo
-    print(f"[bt] LONG-ONLY Q5 vs SPY: ann_ret={lo['ann_return']:+.2%} "
-          f"active={lo['ann_active_return']:+.2%} "
-          f"IR={lo['information_ratio']:+.2f} "
-          f"maxDD={lo['max_drawdown']:.2%} "
-          f"(peak {lo['max_dd_peak'][:10] if lo['max_dd_peak'] else 'n/a'} -> "
-          f"trough {lo['max_dd_trough'][:10] if lo['max_dd_trough'] else 'n/a'}) "
-          f"turnover={lo['avg_turnover_oneway']:.2f}", flush=True)
+    print(f"[bt] (diagnostic) EW long-only Q5 vs SPY: "
+          f"ann_ret={lo['ann_return']:+.2%} active={lo['ann_active_return']:+.2%} "
+          f"IR={lo['information_ratio']:+.2f} maxDD={lo['max_drawdown']:.2%}",
+          flush=True)
 
     # --- secondary diagnostic: long-only Q5 vs equal-weight universe ---
     # Same delisting economics as the engine (gaps 0.0, permanent -0.3);
     # without it the benchmark phantom-bankrupts on gappy microcaps.
-    exit_fill = pb.build_exit_fill(prices, trade_dates)
+    # (exit_fill already built above for the cap-weighted leg.)
     bench = pb.equal_weight_benchmark(prices, trade_dates, sig, exit_fill)
     bench.to_csv(out / "benchmark_ew.csv", header=True)
     active_ew = (q5_net - bench).dropna()

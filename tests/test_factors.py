@@ -8,7 +8,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from borealis.factors import quality, growth, momentum, lowvol, size
+from borealis.factors import quality, growth, momentum, lowvol, size, value
 
 
 def _toy():
@@ -107,6 +107,69 @@ class TestOrientation(unittest.TestCase):
     def test_nan_imputed_not_dropped(self):
         g = growth.growth_score(_toy())
         self.assertFalse(g.isna().any())
+
+
+class TestValueEarningsYield(unittest.TestCase):
+    """2026-09-30: P/E replaced by earnings yield in the value sleeve."""
+
+    def _df(self):
+        return pd.DataFrame({
+            "sector": ["s"] * 4,
+            "earn_yield": [0.10, 0.02, 0.05, np.nan],
+            "ps_ratio": [1.0, 5.0, 2.0, 3.0],
+            "ev_to_ebitda": [8.0, 20.0, 12.0, 15.0],
+            "pb_ratio": [1.5, 4.0, 2.0, 2.5],
+            "pe_ratio": [10.0, 50.0, 20.0, 30.0],  # diagnostic only now
+        })
+
+    def test_earnings_yield_in_sleeve_pe_out(self):
+        self.assertIn("earn_yield", value.VALUE_METRICS)
+        self.assertNotIn("pe_ratio", value.VALUE_METRICS)
+
+    def test_higher_ey_is_cheaper(self):
+        v = value.value_score(self._df())
+        self.assertGreater(v.iloc[0], v.iloc[1])  # EY 10% beats 2%
+
+    def test_negative_ey_kept_not_quarantined(self):
+        # a negative earnings yield is informative (unlike negative P/E)
+        df = pd.DataFrame({
+            "sector": ["s"] * 3,
+            "earn_yield": [0.10, -0.05, 0.02],
+        })
+        v = value.value_score(df)
+        self.assertFalse(v.isna().any())
+        self.assertLess(v.iloc[1], v.iloc[2])  # -5% EY ranks below +2%
+
+    def test_workbook_path_derives_ey_from_pe(self):
+        # no earn_yield column -> derive 1/pe_ratio with the same quarantine
+        df = pd.DataFrame({
+            "sector": ["s"] * 3,
+            "pe_ratio": [10.0, 50.0, -5.0],
+        })
+        v = value.value_score(df)
+        self.assertFalse(v.isna().any())
+        self.assertGreater(v.iloc[0], v.iloc[1])  # EY 10% beats 2%
+
+
+class TestLowvolRealizedVol(unittest.TestCase):
+    """2026-09-30: live low-vol reverted to 126d realized volatility."""
+
+    def test_prefers_vol_126d_over_beta(self):
+        df = pd.DataFrame({
+            "sector": ["s"] * 3,
+            "vol_126d": [0.40, 0.15, 0.25],
+            "trailing_beta": [0.5, 1.5, 1.0],  # disagrees on purpose
+        })
+        v = lowvol.lowvol_score(df)
+        self.assertGreater(v.iloc[1], v.iloc[0])  # vol 0.15 beats 0.40
+
+    def test_workbook_fallback_to_beta(self):
+        df = pd.DataFrame({
+            "sector": ["s"] * 3,
+            "trailing_beta": [1.5, 0.5, 1.0],
+        })
+        v = lowvol.lowvol_score(df)
+        self.assertGreater(v.iloc[1], v.iloc[0])
 
 
 if __name__ == "__main__":

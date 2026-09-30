@@ -301,6 +301,115 @@ def build_exit_fill(prices: pd.DataFrame,
     return out.reindex(trade_dates[1:])
 
 
+def cap_weight_frame(panel_dir: str | Path,
+                      month_ends: list[pd.Timestamp],
+                      tickers: list[str]) -> pd.DataFrame:
+    """Point-in-time market_cap per (month-end, ticker), pivoted date x ticker.
+
+    The panel is point-in-time, so values are as known at the rebalance
+    date -- no lookahead. Used to cap-weight the Q5 long-only leg.
+    """
+    dataset = ds.dataset(str(panel_dir), format="parquet", partitioning="hive")
+    cols = ["ticker", "date", "market_cap"]
+    filt = (ds.field("date").isin([pd.Timestamp(d) for d in month_ends])
+            & ds.field("ticker").isin(tickers))
+    table = dataset.to_table(
+        columns=[c for c in cols if c in dataset.schema.names],
+        filter=filt,
+    )
+    df = table.to_pandas()
+    df["date"] = pd.to_datetime(df["date"])
+    df["market_cap"] = pd.to_numeric(df["market_cap"], errors="coerce")
+    cap = df.pivot_table(index="date", columns="ticker", values="market_cap",
+                         aggfunc="last").sort_index()
+    return cap.reindex([pd.Timestamp(d) for d in month_ends])
+
+
+def cap_weighted_q5(prices: pd.DataFrame, sig_mat: pd.DataFrame,
+                    trade_dates: pd.DatetimeIndex,
+                    cap_mat: pd.DataFrame,
+                    cost_bps: float = 10.0,
+                    exit_fill: pd.DataFrame | None = None,
+                    winsorize_hold: tuple[float, float] | None = (0.01, 0.99),
+                    delist_fill: float | None = -0.3
+                    ) -> tuple[pd.Series, pd.Series]:
+    """Cap-weighted Q5 long-only leg: net returns + one-way turnover.
+
+    Mirrors ``run_backtest`` exactly (same Q5 membership via qcut, same
+    t+1 signal timing, same holding-return winsorization and delisting
+    economics) except holdings are weighted by point-in-time market cap at
+    the signal month-end instead of equal-weighted. Members with missing
+    or nonpositive caps are excluded and the rest renormalized; if no
+    member has a valid cap, the period falls back to equal weight
+    (documented, rare on large caps).
+    Turnover uses the engine's target-to-target convention
+    (0.5 * |w_new - w_prev|) for comparability with the EW leg.
+    Returns (net_returns, turnover), indexed by trade date.
+    """
+    if not prices.index.equals(sig_mat.index):
+        raise ValueError("prices and sig_mat must share the same DatetimeIndex")
+    if not prices.columns.equals(sig_mat.columns):
+        raise ValueError("prices and sig_mat must share the same tickers")
+    dates = prices.index
+    sig = sig_mat.shift(1)  # same lookahead defense as the engine
+    reb_idx = [dates.get_loc(d) for d in trade_dates]
+
+    rets: list[float] = []
+    turns: list[float] = []
+    idx: list = []
+    prev_w = pd.Series(0.0, index=prices.columns)
+    for k, i in enumerate(reb_idx):
+        s = sig.iloc[i].dropna()
+        if s.nunique() < 5:
+            continue  # not enough dispersion to form quintiles
+        labels = pd.qcut(s, 5, labels=False, duplicates="drop") + 1
+        members = labels[labels == 5].index
+        j = reb_idx[k + 1] if k + 1 < len(reb_idx) else len(dates) - 1
+        if j <= i or not len(members):
+            continue
+        # signal month-end = the trading day whose signal we just read
+        me = dates[i - 1]
+        w = pd.Series(0.0, index=prices.columns)
+        if me in cap_mat.index:
+            caps = pd.to_numeric(cap_mat.loc[me].reindex(members),
+                                 errors="coerce")
+            valid = caps[caps > 0].dropna()
+            if len(valid):
+                w[valid.index] = valid / valid.sum()
+        if w.sum() == 0.0:
+            w[members] = 1.0 / len(members)  # documented fallback
+        entry_px = prices.iloc[i]
+        exit_px = prices.iloc[j]
+        hold = exit_px / entry_px - 1.0
+        if winsorize_hold is not None:
+            obs = entry_px.notna() & exit_px.notna()
+            if obs.any():
+                lo = float(hold[obs].quantile(winsorize_hold[0]))
+                hi = float(hold[obs].quantile(winsorize_hold[1]))
+                if np.isfinite(lo) and np.isfinite(hi) and hi > lo:
+                    hold = hold.mask(obs, hold.clip(lo, hi))
+        if delist_fill is not None or exit_fill is not None:
+            missing_exit = entry_px.notna() & exit_px.isna()
+            if missing_exit.any():
+                fill = (pd.Series(delist_fill, index=prices.columns)
+                        if delist_fill is not None
+                        else pd.Series(np.nan, index=prices.columns))
+                if exit_fill is not None and dates[j] in exit_fill.index:
+                    fr = exit_fill.loc[dates[j]].reindex(prices.columns)
+                    fill = fr.where(fr.notna(), fill)
+                hold = hold.mask(missing_exit, fill)
+        hold = hold.fillna(0.0)
+        gross = float((w * hold).sum())
+        tnover = float(0.5 * (w - prev_w).abs().sum())
+        rets.append(gross - tnover * cost_bps / 1e4)
+        turns.append(tnover)
+        idx.append(dates[i])
+        prev_w = w
+    q = pd.Series(rets, index=pd.DatetimeIndex(idx), name="Q5_capweight")
+    t = pd.Series(turns, index=pd.DatetimeIndex(idx), name="Q5_capweight")
+    return q, t
+
+
 def summarize_spread(res_gross: BacktestResult,
                      res_net: BacktestResult | None = None,
                      cost_bps: float = 0.0) -> dict:

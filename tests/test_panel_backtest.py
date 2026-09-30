@@ -405,5 +405,74 @@ class TestLongOnlyVsSpy(unittest.TestCase):
         self.assertAlmostEqual(bench.iloc[1], 0.025)
 
 
+class TestCapWeightedQ5(unittest.TestCase):
+    """2026-09-30: cap-weighted Q5 is the primary long-only leg."""
+
+    def _ten(self):
+        dates = pd.date_range("2020-01-01", periods=10, freq="D")
+        cols = [f"T{i}" for i in range(10)]
+        prices = pd.DataFrame(100.0, index=dates, columns=cols)
+        prices.loc[dates[3]:, "T8"] = 110.0   # T8 +10% from day 3
+        prices.loc[dates[3]:, "T9"] = 120.0   # T9 +20% from day 3
+        signals = pd.DataFrame(np.nan, index=dates, columns=cols)
+        signals.loc[dates[1]] = [float(i + 1) for i in range(10)]
+        signals.loc[dates[6]] = [float(10 - i) for i in range(10)]
+        return dates, prices, signals.ffill()
+
+    def test_equal_caps_match_engine_q5(self):
+        # all caps equal -> identical to the engine's equal-weight Q5
+        dates, prices, sig = self._ten()
+        trades = [dates[2], dates[7]]
+        me = [dates[1], dates[6]]
+        cap_mat = pd.DataFrame(1.0, index=pd.DatetimeIndex(me),
+                               columns=sig.columns)
+        q, t = pb.cap_weighted_q5(prices, sig, pd.DatetimeIndex(trades),
+                                   cap_mat, cost_bps=10.0,
+                                   winsorize_hold=None)
+        cfg = BacktestConfig(n_quantiles=5, signal_lag=1, cost_bps=10.0,
+                             rebalance_dates=trades, periods_per_year=12)
+        res = run_backtest(prices, sig, cfg)
+        pd.testing.assert_series_equal(q, res.quantile_returns["Q5"],
+                                       check_names=False)
+        pd.testing.assert_series_equal(t, res.turnover["Q5"],
+                                       check_names=False)
+
+    def test_weights_proportional_to_cap(self):
+        # Q5 = {T8, T9}; caps 1:3 -> weights .25/.75; holding +10%/+20%
+        dates, prices, sig = self._ten()
+        trades = [dates[2]]
+        cap_mat = pd.DataFrame(np.nan, index=pd.DatetimeIndex([dates[1]]),
+                               columns=sig.columns)
+        cap_mat.loc[dates[1], "T8"] = 1e9
+        cap_mat.loc[dates[1], "T9"] = 3e9
+        q, t = pb.cap_weighted_q5(prices, sig, pd.DatetimeIndex(trades),
+                                   cap_mat, cost_bps=0.0,
+                                   winsorize_hold=None)
+        # gross = .25*.10 + .75*.20 = .175; turnover = .5*(.25+.75) = .5
+        self.assertAlmostEqual(q.iloc[0], 0.175)
+        self.assertAlmostEqual(t.iloc[0], 0.5)
+
+    def test_missing_caps_excluded_and_renormalized(self):
+        dates, prices, sig = self._ten()
+        trades = [dates[2]]
+        cap_mat = pd.DataFrame(np.nan, index=pd.DatetimeIndex([dates[1]]),
+                               columns=sig.columns)
+        cap_mat.loc[dates[1], "T9"] = 3e9  # T8 missing -> all weight on T9
+        q, _ = pb.cap_weighted_q5(prices, sig, pd.DatetimeIndex(trades),
+                                   cap_mat, cost_bps=0.0,
+                                   winsorize_hold=None)
+        self.assertAlmostEqual(q.iloc[0], 0.20)
+
+    def test_all_caps_missing_falls_back_to_equal_weight(self):
+        dates, prices, sig = self._ten()
+        trades = [dates[2]]
+        cap_mat = pd.DataFrame(np.nan, index=pd.DatetimeIndex([dates[1]]),
+                               columns=sig.columns)
+        q, _ = pb.cap_weighted_q5(prices, sig, pd.DatetimeIndex(trades),
+                                   cap_mat, cost_bps=0.0,
+                                   winsorize_hold=None)
+        self.assertAlmostEqual(q.iloc[0], 0.15)  # (.10 + .20) / 2
+
+
 if __name__ == "__main__":
     unittest.main()
