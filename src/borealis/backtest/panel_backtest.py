@@ -9,8 +9,10 @@ Pipeline (all read-only on the panel):
   4. trade dates = month-end + 1 trading day (t+1 execution); the engine's
      signal_lag=1 shift then pairs each trade with the signal as of the
      month-end close -- no lookahead by construction
-  5. costed quintile engine -> long-short (Q5-Q1) and long-only (Q5)
-     vs equal-weight universe benchmark
+  5. costed quintile engine -> PRIMARY: long-only Q5 vs SPY (10bps
+     one-way on the long side); the long-short (Q5-Q1) spread is kept
+     as a diagnostic only (shorting cut 2026-09-30: the short book was
+     unshortable junk, modeled short costs fiction)
 
 Universe: tickers with a non-NaN composite z at the rebalance date
 (same universe as the factor-efficacy lab, so IC/quintile numbers are
@@ -149,10 +151,91 @@ def signal_matrix(signals: pd.DataFrame,
     return s
 
 
+def spy_benchmark(panel_dir: str | Path,
+                  trade_dates: pd.DatetimeIndex) -> pd.Series:
+    """SPY buy-and-hold total return per holding period (t0 -> t1).
+
+    Same trade calendar as the engine, so the series aligns 1:1 with the
+    Q5 leg's monthly returns. adj_close is split/dividend adjusted, i.e.
+    total return. Raises if SPY has no prices on the calendar.
+    """
+    dataset = ds.dataset(str(panel_dir), format="parquet", partitioning="hive")
+    table = dataset.to_table(
+        columns=["date", "adj_close"],
+        filter=ds.field("ticker") == "SPY",
+    )
+    df = table.to_pandas()
+    df["date"] = pd.to_datetime(df["date"])
+    spy = df.set_index("date")["adj_close"].astype(float).sort_index()
+    spy = spy.reindex(trade_dates).ffill()
+    if spy.isna().any():
+        missing = spy[spy.isna()].index.tolist()
+        raise ValueError(f"SPY missing prices on trade dates: {missing[:5]}")
+    rets = (spy.shift(-1) / spy - 1.0).iloc[:-1]
+    rets.index = trade_dates[:-1]
+    return rets.rename("spy")
+
+
+def summarize_longonly(q5: pd.Series, turnover: pd.Series,
+                       spy: pd.Series) -> dict:
+    """Long-only Q5 vs SPY: absolute stats plus active (benchmark-relative).
+
+    q5: Q5 leg net monthly returns (costs already charged by the engine).
+    turnover: Q5 one-way turnover per period. spy: SPY monthly returns on
+    the same calendar. All three are aligned on their common index.
+    """
+    idx = q5.index.intersection(turnover.index).intersection(spy.index)
+    q5, turnover, spy = q5.loc[idx], turnover.loc[idx], spy.loc[idx]
+    n = len(q5)
+    ann_ret = float(q5.mean() * 12) if n else 0.0
+    ann_vol = float(q5.std() * np.sqrt(12)) if n > 1 else 0.0
+    cum = (1 + q5).cumprod()
+    roll_max = cum.cummax()
+    dd = cum / roll_max - 1.0
+    max_dd = float(dd.min()) if n else 0.0
+    trough = dd.idxmin() if n else None
+    peak = cum.loc[:trough].idxmax() if n else None
+    rec = dd.loc[trough:][dd.loc[trough:] >= 0]
+    recovered = rec.index[0] if len(rec) else None
+    active = q5 - spy
+    a_ret = float(active.mean() * 12) if n else 0.0
+    a_vol = float(active.std() * np.sqrt(12)) if n > 1 else 0.0
+    return {
+        "periods": n,
+        "ann_return": ann_ret,
+        "ann_vol": ann_vol,
+        "sharpe": ann_ret / ann_vol if ann_vol else 0.0,
+        "max_drawdown": max_dd,
+        "max_dd_peak": peak.isoformat() if peak is not None else None,
+        "max_dd_trough": trough.isoformat() if trough is not None else None,
+        "max_dd_recovered": (recovered.isoformat()
+                             if recovered is not None else None),
+        "avg_turnover_oneway": float(turnover.mean()) if n else 0.0,
+        "hit_rate": float((q5 > 0).mean()) if n else 0.0,
+        "spy_ann_return": float(spy.mean() * 12) if n else 0.0,
+        "ann_active_return": a_ret,
+        "ann_tracking_error": a_vol,
+        "information_ratio": a_ret / a_vol if a_vol else 0.0,
+        "hit_rate_vs_spy": float((active > 0).mean()) if n else 0.0,
+        "cumulative": float(cum.iloc[-1] - 1) if n else 0.0,
+        "cumulative_active": float(((1 + active).cumprod().iloc[-1] - 1)
+                                   if n else 0.0),
+    }
+
+
 def equal_weight_benchmark(prices: pd.DataFrame,
                            trade_dates: pd.DatetimeIndex,
-                           universe: pd.DataFrame) -> pd.Series:
-    """Per-period equal-weighted total return of signal-eligible tickers."""
+                           universe: pd.DataFrame,
+                           exit_fill: pd.DataFrame | None = None
+                           ) -> pd.Series:
+    """Per-period equal-weighted total return of signal-eligible tickers.
+
+    Delisting economics mirror the engine: names with no exit price book
+    0.0 when they trade again later (data gap / ticker change) and -0.3
+    when permanently delisted (via ``exit_fill``; build with
+    build_exit_fill to match the main spec). Booking -1.0 on every gap
+    would phantom-bankrupt the benchmark on gappy microcaps.
+    """
     rets = []
     um = universe.pivot_table(index="date", columns="ticker",
                               values="z_composite", aggfunc="last").notna()
@@ -164,15 +247,23 @@ def equal_weight_benchmark(prices: pd.DataFrame,
         if not members:
             rets.append(np.nan)
             continue
-        h = prices.loc[t1, members] / prices.loc[t0, members] - 1.0
-        h = h.mask(prices.loc[t0, members].notna()
-                   & prices.loc[t1, members].isna(), -1.0)  # delisted
-        # same corrupt-price defense as the engine: 1/99 winsorization
-        obs = h.notna() & (h != -1.0)
+        e0, e1 = prices.loc[t0, members], prices.loc[t1, members]
+        h = e1 / e0 - 1.0
+        # same corrupt-price defense as the engine: 1/99 winsorization of
+        # observed holding returns, before delisting fills
+        obs = e0.notna() & e1.notna()
         if obs.any():
             lo, hi = float(h[obs].quantile(0.01)), float(h[obs].quantile(0.99))
             if np.isfinite(lo) and np.isfinite(hi) and hi > lo:
                 h = h.mask(obs, h.clip(lo, hi))
+        missing_exit = e0.notna() & e1.isna()
+        if missing_exit.any():
+            if exit_fill is not None and t1 in exit_fill.index:
+                fr = exit_fill.loc[t1].reindex(members)
+                h = h.mask(missing_exit & fr.notna(), fr)
+                h = h.mask(missing_exit & fr.isna(), 0.0)
+            else:
+                h = h.mask(missing_exit, -1.0)
         rets.append(float(h.fillna(0.0).mean()))
     return pd.Series(rets, index=trade_dates[:-1], name="benchmark_ew")
 

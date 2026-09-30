@@ -310,5 +310,100 @@ class TestLargeCapUniverse(unittest.TestCase):
             self.assertGreater(float(z["BIG"]), float(z["MID"]))
 
 
+class TestLongOnlyVsSpy(unittest.TestCase):
+    def _spy_panel(self, td):
+        panel = Path(td) / "panel"
+        panel.mkdir()
+        rows = [{"ticker": "SPY", "date": pd.Timestamp(d), "adj_close": px}
+                for d, px in [("2020-01-31", 400.0), ("2020-02-29", 404.0),
+                              ("2020-03-31", 400.0), ("2020-04-30", 408.0)]]
+        pd.DataFrame(rows).to_parquet(panel / "part.parquet")
+        return panel
+
+    def test_spy_benchmark_monthly_returns(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            panel = self._spy_panel(td)
+            trades = pd.DatetimeIndex([pd.Timestamp(d) for d in
+                                       ["2020-01-31", "2020-02-29",
+                                        "2020-03-31", "2020-04-30"]])
+            spy = pb.spy_benchmark(panel, trades)
+            self.assertEqual(list(spy.index), list(trades[:-1]))
+            self.assertAlmostEqual(spy.iloc[0], 0.01)
+            self.assertAlmostEqual(spy.iloc[1], 400.0 / 404.0 - 1.0)
+            self.assertAlmostEqual(spy.iloc[2], 0.02)
+
+    def test_spy_benchmark_missing_raises(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            panel = Path(td) / "panel"
+            panel.mkdir()
+            pd.DataFrame([{"ticker": "QQQ",
+                           "date": pd.Timestamp("2020-01-31"),
+                           "adj_close": 100.0}]
+                         ).to_parquet(panel / "part.parquet")
+            trades = pd.DatetimeIndex([pd.Timestamp("2020-01-31"),
+                                       pd.Timestamp("2020-02-29")])
+            with self.assertRaises(ValueError):
+                pb.spy_benchmark(panel, trades)
+
+    def test_summarize_longonly_stats(self):
+        idx = pd.DatetimeIndex([pd.Timestamp(d) for d in
+                                   ["2020-01-31", "2020-02-29",
+                                    "2020-03-31", "2020-04-30"]])
+        q5 = pd.Series([0.02, -0.01, 0.03, 0.01], index=idx)
+        turn = pd.Series([0.4, 0.5, 0.3, 0.4], index=idx)
+        spy = pd.Series([0.01, -0.02, 0.01, 0.005], index=idx)
+        s = pb.summarize_longonly(q5, turn, spy)
+        self.assertEqual(s["periods"], 4)
+        self.assertAlmostEqual(s["ann_return"], q5.mean() * 12)
+        self.assertAlmostEqual(s["ann_active_return"],
+                               (q5 - spy).mean() * 12)
+        self.assertAlmostEqual(s["avg_turnover_oneway"], turn.mean())
+        self.assertAlmostEqual(s["spy_ann_return"], spy.mean() * 12)
+        self.assertLess(s["max_drawdown"], 0)
+        self.assertEqual(s["max_dd_peak"][:10], "2020-01-31")
+        self.assertEqual(s["max_dd_trough"][:10], "2020-02-29")
+        self.assertEqual(s["max_dd_recovered"][:10], "2020-03-31")
+        self.assertGreater(s["information_ratio"], 0)
+        self.assertAlmostEqual(s["hit_rate"], 0.75)
+
+    def test_summarize_longonly_aligns_indexes(self):
+        idx = pd.DatetimeIndex([pd.Timestamp(d) for d in
+                                   ["2020-01-31", "2020-02-29",
+                                    "2020-03-31", "2020-04-30"]])
+        q5 = pd.Series([0.02, -0.01, 0.03, 0.01], index=idx)
+        turn = pd.Series([0.4, 0.5, 0.3, 0.4], index=idx)
+        spy = pd.Series([0.01, -0.02, 0.01], index=idx[:-1])
+        s = pb.summarize_longonly(q5, turn, spy)
+        self.assertEqual(s["periods"], 3)
+
+    def test_ew_benchmark_delist_economics(self):
+        # C permanently delists -> -0.3; D gaps one period -> 0.0.
+        # Booking -1.0 on every gap (old behavior) would phantom-bankrupt
+        # the benchmark on gappy microcaps.
+        dates = pd.DatetimeIndex([pd.Timestamp(d) for d in
+                                  ["2020-01-31", "2020-02-29",
+                                   "2020-03-31"]])
+        prices = pd.DataFrame({
+            "A": [100.0, 110.0, 121.0],
+            "B": [100.0, 100.0, 100.0],
+            "C": [100.0, np.nan, np.nan],
+            "D": [100.0, np.nan, 105.0],
+        }, index=dates)
+        uni = pd.DataFrame({
+            "date": [dates[0]] * 4 + [dates[1]] * 4,
+            "ticker": ["A", "B", "C", "D"] * 2,
+            "z_composite": [1.0] * 8,
+        })
+        ef = pb.build_exit_fill(prices, dates)
+        bench = pb.equal_weight_benchmark(prices, dates, uni, ef)
+        # period 1: (0.10 + 0.00 - 0.30 + 0.00)/4
+        # period 2: C and D have no entry price -> 0.0, like the engine's
+        # never-held tickers: (0.10 + 0.00 + 0.00 + 0.00)/4
+        self.assertAlmostEqual(bench.iloc[0], -0.05)
+        self.assertAlmostEqual(bench.iloc[1], 0.025)
+
+
 if __name__ == "__main__":
     unittest.main()

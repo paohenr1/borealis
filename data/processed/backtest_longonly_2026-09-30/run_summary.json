@@ -1,0 +1,92 @@
+{
+ "delist_incidence": 0.018332767167408972,
+ "n_trade_dates": 80,
+ "n_tickers": 14887,
+ "full_0bps": {
+  "periods": 80,
+  "ann_return": 0.0385544479328466,
+  "ann_vol": 0.1251802030289182,
+  "sharpe": 0.30799157534470556,
+  "max_drawdown": -0.26343319752607597,
+  "avg_turnover_ls": 0.3823324653550658,
+  "hit_rate": 0.55,
+  "cumulative": 0.22583593719756956
+ },
+ "full_10bps": {
+  "periods": 80,
+  "ann_return": 0.0339664583485858,
+  "ann_vol": 0.1253336728802018,
+  "sharpe": 0.2710082419833981,
+  "max_drawdown": -0.2697366966091642,
+  "avg_turnover_ls": 0.3823324653550658,
+  "hit_rate": 0.525,
+  "cumulative": 0.18881332444014065
+ },
+ "full_10bps_delist100": {
+  "periods": 80,
+  "ann_return": 0.015894989002664915,
+  "ann_vol": 0.12450273476882429,
+  "sharpe": 0.1276677900463681,
+  "max_drawdown": -0.2739570974937885,
+  "avg_turnover_ls": 0.3823324653550658,
+  "hit_rate": 0.5,
+  "cumulative": 0.05459622985226242
+ },
+ "px5_10bps": {
+  "periods": 80,
+  "ann_return": 0.015263094312067661,
+  "ann_vol": 0.13036417919697696,
+  "sharpe": 0.11708043118965612,
+  "max_drawdown": -0.2854979606768975,
+  "avg_turnover_ls": 0.380825334577756,
+  "hit_rate": 0.5375,
+  "cumulative": 0.04539181801064318
+ },
+ "longonly_Q5_vs_spy_10bps": {
+  "periods": 79,
+  "ann_return": 0.023727348186078606,
+  "ann_vol": 0.17119300768015241,
+  "sharpe": 0.13859998435455656,
+  "max_drawdown": -0.27088406999917714,
+  "max_dd_peak": "2020-02-03T00:00:00",
+  "max_dd_trough": "2020-03-02T00:00:00",
+  "max_dd_recovered": "2020-07-01T00:00:00",
+  "avg_turnover_oneway": 0.19832064149160838,
+  "hit_rate": 0.5569620253164557,
+  "spy_ann_return": 0.16069275395715268,
+  "ann_active_return": -0.13696540577107408,
+  "ann_tracking_error": 0.10202035722905246,
+  "information_ratio": -1.3425301527180917,
+  "hit_rate_vs_spy": 0.35443037974683544,
+  "cumulative": 0.057302368099361845,
+  "cumulative_active": -0.6099790185632347
+ },
+ "longonly_Q5_vs_bench_10bps": {
+  "ann_active_return": -0.02872887877757232,
+  "ann_tracking_error": 0.08314466840845174,
+  "information_ratio": -0.3455288153467697,
+  "bench_ann_return": 0.05245622696365093,
+  "q5_ann_return": 0.021965301240182145
+ },
+ "composite_ic_21d": {
+  "mean": 0.023948325535404484,
+  "tstat": 1.4697453035524821,
+  "hit_rate": 0.569620253164557,
+  "n": 79
+ },
+ "config": {
+  "generated": "2026-09-30T15:47:21+00:00",
+  "panel": "data/processed/intrinio/panel",
+  "signal": "z_composite: sleeve-weighted sector-neutral z (weights from borealis.lab.composite.SLEEVE_WEIGHTS)",
+  "universe": "tickers with non-NaN z_composite at rebalance (lab universe)",
+  "rebalance": "monthly; trade at month-end + 1 trading day (t+1 execution)",
+  "costs_bps_one_way": [
+   0.0,
+   10.0
+  ],
+  "delist_treatment": "missing exit price: 0.0 if ticker trades again later (data gap / ticker change, ~76% of cases), -0.3 if permanently delisted (Shumway 1997); full_10bps_delist100 reruns with -1.0 as the conservative bound",
+  "holding_return_winsorization": "per-period cross-sectional 1/99 (corrupt adjusted-price defense; e.g. CDT 2023-11 adj_close 1.1e8)",
+  "spread_cost_accounting": "dollar-neutral L/S pays one-way costs on BOTH legs: net spread = gross(Q5-Q1) - (turnover_Q5+turnover_Q1)*cost",
+  "prices": "adj_close (split+dividend adjusted, total return)"
+ }
+}

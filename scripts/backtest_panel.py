@@ -177,23 +177,47 @@ def main() -> None:
           f"sharpe={summ_px['sharpe']:+.2f} maxDD={summ_px['max_drawdown']:.2%}",
           flush=True)
 
-    # --- long-only Q5 vs equal-weight benchmark ---
-    bench = pb.equal_weight_benchmark(prices, trade_dates, sig)
+    # --- PRIMARY: long-only Q5 vs SPY (10bps one-way, long side only) ---
+    # The L/S spread machinery above is kept as a diagnostic; the
+    # long-only leg is the production evaluation. Shorting is cut:
+    # the short book was unshortable junk and its modeled costs fiction
+    # (drawdown autopsy 2026-09-30).
+    res_lo = runs[10.0]
+    q5_net = res_lo.quantile_returns["Q5"]
+    q5_turn = res_lo.turnover["Q5"]
+    spy = pb.spy_benchmark(args.panel, trade_dates)
+    q5_net.to_csv(out / "longonly_Q5_net_10bps.csv", header=True)
+    (q5_net - spy).dropna().to_csv(out / "longonly_Q5_active_vs_spy_10bps.csv",
+                                   header=True)
+    lo = pb.summarize_longonly(q5_net, q5_turn, spy)
+    results["longonly_Q5_vs_spy_10bps"] = lo
+    print(f"[bt] LONG-ONLY Q5 vs SPY: ann_ret={lo['ann_return']:+.2%} "
+          f"active={lo['ann_active_return']:+.2%} "
+          f"IR={lo['information_ratio']:+.2f} "
+          f"maxDD={lo['max_drawdown']:.2%} "
+          f"(peak {lo['max_dd_peak'][:10] if lo['max_dd_peak'] else 'n/a'} -> "
+          f"trough {lo['max_dd_trough'][:10] if lo['max_dd_trough'] else 'n/a'}) "
+          f"turnover={lo['avg_turnover_oneway']:.2f}", flush=True)
+
+    # --- secondary diagnostic: long-only Q5 vs equal-weight universe ---
+    # Same delisting economics as the engine (gaps 0.0, permanent -0.3);
+    # without it the benchmark phantom-bankrupts on gappy microcaps.
+    exit_fill = pb.build_exit_fill(prices, trade_dates)
+    bench = pb.equal_weight_benchmark(prices, trade_dates, sig, exit_fill)
     bench.to_csv(out / "benchmark_ew.csv", header=True)
-    q5 = runs[10.0].quantile_returns["Q5"]
-    active = (q5 - bench).dropna()
-    n = len(active)
-    a_ret = float(active.mean() * 12)
-    a_vol = float(active.std() * np.sqrt(12)) if n > 1 else 0.0
+    active_ew = (q5_net - bench).dropna()
+    n_ew = len(active_ew)
+    a_ret_ew = float(active_ew.mean() * 12)
+    a_vol_ew = float(active_ew.std() * np.sqrt(12)) if n_ew > 1 else 0.0
     results["longonly_Q5_vs_bench_10bps"] = {
-        "ann_active_return": a_ret,
-        "ann_tracking_error": a_vol,
-        "information_ratio": a_ret / a_vol if a_vol else 0.0,
+        "ann_active_return": a_ret_ew,
+        "ann_tracking_error": a_vol_ew,
+        "information_ratio": a_ret_ew / a_vol_ew if a_vol_ew else 0.0,
         "bench_ann_return": float(bench.mean() * 12),
-        "q5_ann_return": float(q5.mean() * 12),
+        "q5_ann_return": float(q5_net.mean() * 12),
     }
-    print(f"[bt] long-only Q5 active: {a_ret:+.2%} ann., "
-          f"IR={a_ret / a_vol:+.2f}" if a_vol else "", flush=True)
+    print(f"[bt] long-only Q5 vs EW universe: {a_ret_ew:+.2%} ann., "
+          f"IR={a_ret_ew / a_vol_ew:+.2f}" if a_vol_ew else "", flush=True)
 
     # --- composite rank IC (cheap, from signal frame + panel fwd returns) ---
     results["composite_ic_21d"] = pb.composite_ic(sig, args.panel)
