@@ -71,6 +71,7 @@ CALC_WANT = [
     "bookvaluepershare", "debttoebitda",
     "roe", "roa", "grossmargin", "operatingmargin", "ebitdamargin",
     "profitmargin", "currentratio", "assetturnover", "leverageratio",
+    "ebittointerestex",  # interest coverage (financial health), added 2026-09-30
 ]
 
 # TTM/FY rows give one trailing-twelve-months vintage per filing.

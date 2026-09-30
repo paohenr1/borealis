@@ -34,6 +34,11 @@ FACTOR_DIRECTION: dict[str, int] = {
     "debt_ebitda": -1, "leverage": -1,
     "rev_growth": 1, "ebitda_growth": 1, "ebit_growth": 1,
     "div_yield": 1,
+    # Financial health (added 2026-09-30): interest coverage = EBIT /
+    # interest expense. Higher = better (more comfortably services debt).
+    # Distinct from debt_ebitda/leverage (how much debt) -- this is whether
+    # earnings cover its cost.
+    "interest_coverage": 1,
     # REGIME-DEPENDENT (flipped 2026-09-28): enterprise_value ICs were
     # significantly negative (t~-5.4) over 2020-2026 -- large caps
     # outperformed, so larger = more attractive for now. Flip back to -1 if

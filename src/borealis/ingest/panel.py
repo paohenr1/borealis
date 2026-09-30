@@ -55,6 +55,7 @@ FACTOR_RENAME = {
     "currentratio": "current_ratio",
     "assetturnover": "asset_turnover",
     "leverageratio": "leverage",
+    "ebittointerestex": "interest_coverage",  # financial health, added 2026-09-30
 }
 
 FUND_META = {
