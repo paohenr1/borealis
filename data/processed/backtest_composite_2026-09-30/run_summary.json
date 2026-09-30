@@ -1,0 +1,73 @@
+{
+ "delist_incidence": 0.018335451159981885,
+ "n_trade_dates": 80,
+ "n_tickers": 14887,
+ "full_0bps": {
+  "periods": 80,
+  "ann_return": 0.03894647591421321,
+  "ann_vol": 0.1268425456951797,
+  "sharpe": 0.3070458393968773,
+  "max_drawdown": -0.26993638754090554,
+  "avg_turnover_ls": 0.37850606728965575,
+  "hit_rate": 0.5375,
+  "cumulative": 0.22726075331147544
+ },
+ "full_10bps": {
+  "periods": 80,
+  "ann_return": 0.034404403106737334,
+  "ann_vol": 0.12700317400658243,
+  "sharpe": 0.2708940416320162,
+  "max_drawdown": -0.2761268370697769,
+  "avg_turnover_ls": 0.37850606728965575,
+  "hit_rate": 0.5375,
+  "cumulative": 0.19054963837960237
+ },
+ "full_10bps_delist100": {
+  "periods": 80,
+  "ann_return": 0.01638678236278055,
+  "ann_vol": 0.1260298673664452,
+  "sharpe": 0.13002300728552102,
+  "max_drawdown": -0.279194897785488,
+  "avg_turnover_ls": 0.37850606728965575,
+  "hit_rate": 0.525,
+  "cumulative": 0.056651446048618936
+ },
+ "px5_10bps": {
+  "periods": 80,
+  "ann_return": 0.018390259701109784,
+  "ann_vol": 0.13176853723870352,
+  "sharpe": 0.13956487706769605,
+  "max_drawdown": -0.2757547726580386,
+  "avg_turnover_ls": 0.37525795551859964,
+  "hit_rate": 0.5375,
+  "cumulative": 0.06599127689904338
+ },
+ "longonly_Q5_vs_bench_10bps": {
+  "ann_active_return": 0.2546046159659597,
+  "ann_tracking_error": 0.39540500230414444,
+  "information_ratio": 0.6439084343452957,
+  "bench_ann_return": -0.22346680649528144,
+  "q5_ann_return": 0.029100702319563083
+ },
+ "composite_ic_21d": {
+  "mean": 0.025653229681061384,
+  "tstat": 1.573468250507763,
+  "hit_rate": 0.5949367088607594,
+  "n": 79
+ },
+ "config": {
+  "generated": "2026-09-30T04:40:41+00:00",
+  "panel": "data/processed/intrinio/panel",
+  "signal": "z_composite: sleeve-weighted sector-neutral z (weights from borealis.lab.composite.SLEEVE_WEIGHTS)",
+  "universe": "tickers with non-NaN z_composite at rebalance (lab universe)",
+  "rebalance": "monthly; trade at month-end + 1 trading day (t+1 execution)",
+  "costs_bps_one_way": [
+   0.0,
+   10.0
+  ],
+  "delist_treatment": "missing exit price: 0.0 if ticker trades again later (data gap / ticker change, ~76% of cases), -0.3 if permanently delisted (Shumway 1997); full_10bps_delist100 reruns with -1.0 as the conservative bound",
+  "holding_return_winsorization": "per-period cross-sectional 1/99 (corrupt adjusted-price defense; e.g. CDT 2023-11 adj_close 1.1e8)",
+  "spread_cost_accounting": "dollar-neutral L/S pays one-way costs on BOTH legs: net spread = gross(Q5-Q1) - (turnover_Q5+turnover_Q1)*cost",
+  "prices": "adj_close (split+dividend adjusted, total return)"
+ }
+}
