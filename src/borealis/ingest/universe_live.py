@@ -119,6 +119,8 @@ DIRECT_TAGS: dict[str, list[str]] = {
     "gross_margin": ["grossmargin"],
     "profit_margin": ["profitmargin"],
     "debt_to_ebitda": ["debttoebitda"],
+    "ev_to_ebitda": ["evtoebitda"],
+    "pb_ratio": ["pricetobook"],
     "freecashflow": ["freecashflow"],
     "beta": ["beta"],                        # absent -> regression fallback
     "debt_to_equity": ["debttoequity"],
@@ -136,7 +138,9 @@ WORKBOOK_COLS = [
 ]
 QUALITY_COLS = ["roe", "roa", "gross_margin", "profit_margin",
                 "fcf_margin", "debt_to_equity", "debt_to_ebitda"]
-LIVE_COLS = WORKBOOK_COLS + QUALITY_COLS
+MOMENTUM_COLS = ["mom_12_1"]
+VALUE_COLS = ["ev_to_ebitda", "pb_ratio"]
+LIVE_COLS = WORKBOOK_COLS + QUALITY_COLS + MOMENTUM_COLS + VALUE_COLS
 
 # Intrinio INDUSTRY_GROUP_NAME -> workbook sector slug (152 groups, verified
 # against the 2026-09-29 bulk for the live universe; see module docstring).
@@ -558,20 +562,20 @@ def read_universe_csv(path: str | Path) -> pd.DataFrame:
     return df
 
 
-def _fallback_beta(raw_dir: Path, tickers: set[str], price_date: pd.Timestamp) -> pd.Series:
-    """252-day regression beta vs SPY from the price bulk. NaN where unavailable.
+def _load_adj_closes(raw_dir: Path, tickers: set[str],
+                     price_date: pd.Timestamp) -> dict[str, pd.Series]:
+    """Split/dividend-adjusted close series per ticker from the price bulk.
 
-    Uses split/dividend-adjusted closes: raw closes embed split/dividend
-    jumps that corrupt the regression (e.g. NVDA's 10:1 split in 2024).
-    Data-quality quarantine: a series with a single-day |log return| > 1.0
-    (ticker contamination or bad ticks in the bulk) gets NaN, not a garbage
-    OLS estimate."""
-    rets: dict[str, pd.Series] = {}
+    Shared by the beta fallback and 12-1 momentum so the ~1GB bulk is read
+    once. Raw closes embed split/dividend jumps that corrupt trailing
+    calculations (e.g. NVDA's 10:1 split in 2024).
+    """
+    closes: dict[str, pd.Series] = {}
     start = price_date - pd.Timedelta(days=400)
     for df in _iter_zip_csvs(raw_dir, "stock_prices"):
         df.columns = [c.upper() for c in df.columns]
         if "ADJ_CLOSE" not in df.columns:
-            raise ValueError("price bulk missing ADJ_CLOSE for beta fallback")
+            raise ValueError("price bulk missing ADJ_CLOSE")
         want = tickers | {"SPY"}
         sub = df.loc[df["TICKER"].isin(want),
                      ["TICKER", "DATE", "ADJ_CLOSE"]].copy()
@@ -583,28 +587,41 @@ def _fallback_beta(raw_dir: Path, tickers: set[str], price_date: pd.Timestamp) -
         for t, grp in sub.groupby("TICKER"):
             s = grp.sort_values("DATE").drop_duplicates("DATE").set_index("DATE")["ADJ_CLOSE"]
             s = pd.to_numeric(s, errors="coerce").dropna()
-            prev = rets.get(t)
-            rets[t] = s if prev is None else pd.concat([prev, s]).sort_index().pipe(
+            prev = closes.get(t)
+            closes[t] = s if prev is None else pd.concat([prev, s]).sort_index().pipe(
                 lambda x: x[~x.index.duplicated(keep="last")])
-    if "SPY" not in rets:
+    return closes
+
+
+def _has_bad_tick(s: pd.Series) -> bool:
+    """True if a single-day |log return| > 1.0 (a 172% move).
+
+    Cannot occur in a clean split-adjusted large-cap series -- the bulk has
+    ticker contamination (e.g. BNY interleaves two securities) and bad ticks
+    (e.g. MRNA +177% for one day). Shared quarantine for beta and momentum.
+    """
+    lr = np.log(s / s.shift(1)).dropna()
+    return bool((lr.abs().max() or 0) > 1.0)
+
+
+def _beta_from_adj(closes: dict[str, pd.Series], tickers: set[str]) -> pd.Series:
+    """252-day regression beta vs SPY from pre-loaded adjusted closes.
+
+    NaN where unavailable. Series failing the bad-tick quarantine get NaN,
+    not a garbage OLS estimate.
+    """
+    if "SPY" not in closes:
         warnings.warn("[universe_live] SPY not in price bulk; trailing_beta -> NaN")
         return pd.Series(np.nan, index=list(tickers), name="trailing_beta")
-    spy = np.log(rets["SPY"] / rets["SPY"].shift(1)).dropna().tail(_BETA_WINDOW)
+    spy = np.log(closes["SPY"] / closes["SPY"].shift(1)).dropna().tail(_BETA_WINDOW)
     out = {}
     for t in tickers:
-        if t not in rets:
+        if t not in closes:
             out[t] = np.nan
             continue
-        r = np.log(rets[t] / rets[t].shift(1)).dropna().tail(_BETA_WINDOW)
-        # Data-quality quarantine: a single-day |log return| > 1.0 (a 172%
-        # move) cannot occur in a clean split-adjusted large-cap series --
-        # the bulk has ticker contamination (e.g. BNY interleaves two
-        # securities) and bad ticks (e.g. MRNA +177% for one day). OLS beta
-        # is meaningless on such a series, so quarantine to NaN (the lowvol
-        # factor imputes the sector median) rather than emit a garbage beta.
-        if r.abs().max() > 1.0:
-            warnings.warn(f"[universe_live] {t}: extreme daily move "
-                          f"(|log ret|={r.abs().max():.2f}); beta -> NaN")
+        r = np.log(closes[t] / closes[t].shift(1)).dropna().tail(_BETA_WINDOW)
+        if _has_bad_tick(closes[t].tail(_BETA_WINDOW + 1)):
+            warnings.warn(f"[universe_live] {t}: bad tick in window; beta -> NaN")
             out[t] = np.nan
             continue
         both = pd.concat([r, spy], axis=1, join="inner").dropna()
@@ -613,6 +630,35 @@ def _fallback_beta(raw_dir: Path, tickers: set[str], price_date: pd.Timestamp) -
         else:
             out[t] = both.iloc[:, 0].cov(both.iloc[:, 1]) / both.iloc[:, 1].var()
     return pd.Series(out, name="trailing_beta")
+
+
+_MOM_LOOKBACK = 252  # trading days
+_MOM_SKIP = 21       # skip the most recent month (standard 12-1)
+
+
+def _momentum_from_adj(closes: dict[str, pd.Series], tickers: set[str]) -> pd.Series:
+    """12-1 trailing return from pre-loaded adjusted closes.
+
+    mom_12_1 = P[t-21] / P[t-252] - 1 in trading days. NaN where history is
+    short or the bad-tick quarantine trips.
+    """
+    need = _MOM_LOOKBACK + 1  # today + 252 trading days back
+    out = {}
+    for t in tickers:
+        s = closes.get(t)
+        if s is None or len(s) < need:
+            out[t] = np.nan
+            continue
+        w = s.tail(need)
+        if _has_bad_tick(w):
+            out[t] = np.nan
+            continue
+        p_base, p_skip = w.iloc[0], w.iloc[-1 - _MOM_SKIP]
+        if p_base <= 0 or p_skip <= 0:
+            out[t] = np.nan
+            continue
+        out[t] = p_skip / p_base - 1.0
+    return pd.Series(out, name="mom_12_1")
 
 
 def build_live_universe(universe_csv: str | Path,
@@ -670,13 +716,16 @@ def build_live_universe(universe_csv: str | Path,
     trev = pd.to_numeric(frame["ttm_revenue"], errors="coerce")
     frame["fcf_margin"] = (fcf / trev).where(fcf.notna() & trev.notna() & (trev != 0))
     frame["debt_to_equity"] = tag("debt_to_equity")
+    frame["ev_to_ebitda"] = tag("ev_to_ebitda")
+    frame["pb_ratio"] = tag("pb_ratio")
 
+    adj = _load_adj_closes(raw_dir, set(keep), snap_date)
     if tags.get("beta") is not None:
         frame["trailing_beta"] = tag("beta")
     else:
         warnings.warn("[universe_live] no beta tag in bulk; using 252d regression beta vs SPY")
-        frame["trailing_beta"] = frame["ticker"].map(
-            _fallback_beta(raw_dir, set(keep), snap_date))
+        frame["trailing_beta"] = frame["ticker"].map(_beta_from_adj(adj, set(keep)))
+    frame["mom_12_1"] = frame["ticker"].map(_momentum_from_adj(adj, set(keep)))
 
     frame["last_qtr"] = frame["last_qtr"].where(frame["last_qtr"].notna(), np.nan)
     frame["currency"] = "USD"

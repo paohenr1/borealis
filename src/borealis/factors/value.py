@@ -1,11 +1,12 @@
-"""Value factor: cheap on P/E and P/S. Higher score = cheaper.
+"""Value factor: cheap on P/E, P/S, EV/EBITDA, P/B. Higher score = cheaper.
 
 PEG was removed 2026-09-29: no vendor tag exists in the Intrinio data
 (all-NaN on the live path), and the factor lab's value result was earned
-without it.
+without it. EV/EBITDA and P/B added 2026-09-29; earnings yield skipped as
+P/E's reciprocal (keep one).
 
 Critical rule: a ratio of zero or negative means missing/negative earnings.
-It is quarantined as NaN (then sector-median imputed) — NEVER ranked as
+It is quarantined as NaN (then sector-median imputed) -- NEVER ranked as
 "cheapest".
 """
 from __future__ import annotations
@@ -13,7 +14,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-VALUE_METRICS = ["pe_ratio", "ps_ratio"]
+VALUE_METRICS = ["pe_ratio", "ps_ratio", "ev_to_ebitda", "pb_ratio"]
 
 
 def _clean_ratio(s: pd.Series) -> pd.Series:

@@ -41,9 +41,9 @@ def _companies_rows():
 def _price_rows():
     rows = []
     for t, px in [("AAA", 100.0), ("BBB", 50.0), ("CCC", 200.0)]:
-        rows.append({"TICKER": t, "DATE": "2026-09-28", "CLOSE": px,
+        rows.append({"TICKER": t, "DATE": "2026-09-28", "CLOSE": px, "ADJ_CLOSE": px,
                      "FIFTY_TWO_WEEK_HIGH": px * 1.25, "FIFTY_TWO_WEEK_LOW": px * 0.8})
-        rows.append({"TICKER": t, "DATE": "2026-09-25", "CLOSE": px * 0.99,
+        rows.append({"TICKER": t, "DATE": "2026-09-25", "CLOSE": px * 0.99, "ADJ_CLOSE": px * 0.99,
                      "FIFTY_TWO_WEEK_HIGH": px * 1.25, "FIFTY_TWO_WEEK_LOW": px * 0.8})
     return rows
 
@@ -53,24 +53,32 @@ def _calc_rows():
         {"ticker": "AAA", "filing_date": "2026-09-20", "first_calculable_at": "2026-09-21",
          "fiscal_period": "Q2TTM", "fiscal_year": 2026, "marketcap": 1e9,
          "pricetoearnings": 20.0, "pricetorevenue": 4.0, "peg_ratio": 1.5,
-         "roe": 0.18, "freecashflow": 1e8, "totalrevenue": 5e8,
-         "revenuegrowth": 0.12, "beta": 1.1, "debttoequity": 0.5},
+         "evtoebitda": 12.0, "pricetobook": 3.0,
+         "roe": 0.18, "roa": 0.08, "grossmargin": 45.0, "profitmargin": 18.0,
+         "freecashflow": 1e8, "totalrevenue": 5e8,
+         "revenuegrowth": 0.12, "beta": 1.1, "debttoequity": 0.5, "debttoebitda": 1.2},
         {"ticker": "BBB", "filing_date": "2026-09-20", "first_calculable_at": "2026-09-21",
          "fiscal_period": "Q2TTM", "fiscal_year": 2026, "marketcap": 2e9,
          "pricetoearnings": 25.0, "pricetorevenue": 5.0, "peg_ratio": 2.0,
-         "roe": 0.10, "freecashflow": 5e7, "totalrevenue": 5e8,
-         "revenuegrowth": 0.05, "beta": 0.9, "debttoequity": 1.2},
+         "evtoebitda": 10.0, "pricetobook": 2.0,
+         "roe": 0.10, "roa": 0.05, "grossmargin": 35.0, "profitmargin": 10.0,
+         "freecashflow": 5e7, "totalrevenue": 5e8,
+         "revenuegrowth": 0.05, "beta": 0.9, "debttoequity": 1.2, "debttoebitda": 2.0},
         # older vintage for CCC must lose to the newer one
         {"ticker": "CCC", "filing_date": "2026-06-20", "first_calculable_at": "2026-06-21",
          "fiscal_period": "Q1TTM", "fiscal_year": 2026, "marketcap": 3e9,
          "pricetoearnings": 30.0, "pricetorevenue": 6.0, "peg_ratio": 2.5,
-         "roe": 0.05, "freecashflow": 1e7, "totalrevenue": 5e8,
-         "revenuegrowth": 0.01, "beta": 1.3, "debttoequity": 2.0},
+         "evtoebitda": 14.0, "pricetobook": 4.0,
+         "roe": 0.05, "roa": 0.03, "grossmargin": 30.0, "profitmargin": 8.0,
+         "freecashflow": 1e7, "totalrevenue": 5e8,
+         "revenuegrowth": 0.01, "beta": 1.3, "debttoequity": 2.0, "debttoebitda": 2.5},
         {"ticker": "CCC", "filing_date": "2026-09-20", "first_calculable_at": "2026-09-21",
          "fiscal_period": "Q2TTM", "fiscal_year": 2026, "marketcap": 3.2e9,
          "pricetoearnings": 28.0, "pricetorevenue": 5.5, "peg_ratio": 2.2,
-         "roe": 0.06, "freecashflow": 2e7, "totalrevenue": 5e8,
-         "revenuegrowth": 0.03, "beta": 1.2, "debttoequity": 1.8},
+         "evtoebitda": 13.0, "pricetobook": 3.5,
+         "roe": 0.06, "roa": 0.04, "grossmargin": 32.0, "profitmargin": 9.0,
+         "freecashflow": 2e7, "totalrevenue": 5e8,
+         "revenuegrowth": 0.03, "beta": 1.2, "debttoebitda": 2.2, "debttoequity": 1.8},
     ]
 
 
@@ -189,10 +197,19 @@ class TestBuildLiveUniverse(unittest.TestCase):
         frame, _ = self._build()
         for col in ORDERED_COLS + ["sector_raw", "sector"]:
             self.assertIn(col, frame.columns)
-        for col in ["roe", "fcf_margin", "debt_to_equity"]:
+        for col in ["roe", "roa", "gross_margin", "profit_margin",
+                    "fcf_margin", "debt_to_equity", "debt_to_ebitda"]:
+            self.assertIn(col, frame.columns)
+        for col in ["mom_12_1", "ev_to_ebitda", "pb_ratio"]:
             self.assertIn(col, frame.columns)
         self.assertEqual(list(frame.columns),
                          [c for c in universe_live.LIVE_COLS if c in frame.columns])
+        # new tags wired end-to-end, not just present
+        aaa = frame.loc[frame["ticker"] == "AAA"].iloc[0]
+        self.assertAlmostEqual(aaa["roa"], 0.08)
+        self.assertAlmostEqual(aaa["gross_margin"], 45.0)
+        self.assertAlmostEqual(aaa["ev_to_ebitda"], 12.0)
+        self.assertAlmostEqual(aaa["pb_ratio"], 3.0)
 
     def test_every_row_has_price_and_sector(self):
         frame, _ = self._build()
@@ -264,8 +281,9 @@ class TestBetaFallback(unittest.TestCase):
             closes = [100.0 * (1.001 ** i) for i in range(300)]
             rows = self._series("AAA", closes) + self._series("SPY", closes)
             self._price_zip(tmp / "stock_prices_test.zip", rows)
-            beta = universe_live._fallback_beta(
+            adj = universe_live._load_adj_closes(
                 tmp, {"AAA"}, pd.Timestamp("2026-09-28"))
+            beta = universe_live._beta_from_adj(adj, {"AAA"})
             self.assertAlmostEqual(beta["AAA"], 1.0, places=2)
         finally:
             shutil.rmtree(tmp)
@@ -280,11 +298,106 @@ class TestBetaFallback(unittest.TestCase):
             self._price_zip(tmp / "stock_prices_test.zip", rows)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                beta = universe_live._fallback_beta(
+                adj = universe_live._load_adj_closes(
                     tmp, {"BAD"}, pd.Timestamp("2026-09-28"))
+                beta = universe_live._beta_from_adj(adj, {"BAD"})
             self.assertTrue(pd.isna(beta["BAD"]))
         finally:
             shutil.rmtree(tmp)
+
+
+class TestMomentum121(unittest.TestCase):
+    def _price_zip(self, path, rows):
+        _write_zip(path, rows, "prices.csv")
+
+    def _series(self, ticker, closes, start="2025-09-01"):
+        rows = []
+        d = pd.Timestamp(start)
+        for c in closes:
+            while d.weekday() >= 5:
+                d += pd.Timedelta(days=1)
+            rows.append({"TICKER": ticker, "DATE": str(d.date()),
+                         "CLOSE": c, "ADJ_CLOSE": c,
+                         "FIFTY_TWO_WEEK_HIGH": c, "FIFTY_TWO_WEEK_LOW": c})
+            d += pd.Timedelta(days=1)
+        return rows
+
+    def test_12m1_skips_most_recent_month(self):
+        # flat at 100 for 253 trading days, then +10% in the last 21 days:
+        # 12-1 must ignore the recent jump -> 0.0
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            closes = [100.0] * 232 + [110.0] * 21
+            rows = self._series("FLAT", closes)
+            self._price_zip(tmp / "stock_prices_test.zip", rows)
+            adj = universe_live._load_adj_closes(
+                tmp, {"FLAT"}, pd.Timestamp("2026-09-28"))
+            mom = universe_live._momentum_from_adj(adj, {"FLAT"})
+            self.assertAlmostEqual(mom["FLAT"], 0.0, places=6)
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_steady_trend_gives_positive_momentum(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            closes = [100.0 * (1.001 ** i) for i in range(253)]
+            rows = self._series("UP", closes)
+            self._price_zip(tmp / "stock_prices_test.zip", rows)
+            adj = universe_live._load_adj_closes(
+                tmp, {"UP"}, pd.Timestamp("2026-09-28"))
+            mom = universe_live._momentum_from_adj(adj, {"UP"})
+            # P[t-21] / P[t-252] - 1 over a 0.1%/day trend
+            self.assertAlmostEqual(mom["UP"], 1.001 ** 231 - 1, places=4)
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_short_history_gives_nan(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            rows = self._series("NEW", [100.0] * 100)
+            self._price_zip(tmp / "stock_prices_test.zip", rows)
+            adj = universe_live._load_adj_closes(
+                tmp, {"NEW"}, pd.Timestamp("2026-09-28"))
+            mom = universe_live._momentum_from_adj(adj, {"NEW"})
+            self.assertTrue(pd.isna(mom["NEW"]))
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_bad_tick_quarantined_to_nan(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            closes = [100.0] * 150 + [1200.0] + [1200.0] * 102
+            rows = self._series("BAD", closes)
+            self._price_zip(tmp / "stock_prices_test.zip", rows)
+            adj = universe_live._load_adj_closes(
+                tmp, {"BAD"}, pd.Timestamp("2026-09-28"))
+            mom = universe_live._momentum_from_adj(adj, {"BAD"})
+            self.assertTrue(pd.isna(mom["BAD"]))
+        finally:
+            shutil.rmtree(tmp)
+
+
+class TestMomentumScoreFallback(unittest.TestCase):
+    def test_uses_mom_12_1_when_present(self):
+        from borealis.factors.momentum import momentum_score
+        df = pd.DataFrame({
+            "ticker": ["A", "B"],
+            "sector": ["x", "x"],
+            "mom_12_1": [0.5, -0.2],
+            "pct_above_52w_low": [0.1, 0.9],
+        })
+        s = momentum_score(df)
+        self.assertGreater(s.iloc[0], s.iloc[1])
+
+    def test_falls_back_to_52w_proxy(self):
+        from borealis.factors.momentum import momentum_score
+        df = pd.DataFrame({
+            "ticker": ["A", "B"],
+            "sector": ["x", "x"],
+            "pct_above_52w_low": [0.9, 0.1],
+        })
+        s = momentum_score(df)
+        self.assertGreater(s.iloc[0], s.iloc[1])
 
 
 if __name__ == "__main__":

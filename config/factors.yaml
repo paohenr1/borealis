@@ -5,15 +5,18 @@
 # (reports/factor_efficacy_20260928.md, reports/factor_correlation_pca_20260928.md).
 # Revised 2026-09-29: PEG removed from value (no vendor data), growth set to
 # zero weight as a negative control, low-vol trimmed per the lab's down-weight
-# verdict. Metric-level recommendations (value consolidation, redundancy drops,
-# size orientation) target the Intrinio panel pipeline; see the reports.
+# verdict; then the build-out batch: quality 3->7 metrics, real 12-1 momentum,
+# value +EV/EBITDA+P/B. Metric-level recommendations (size orientation)
+# target the Intrinio panel pipeline; see the reports.
 factors:
   value:
     weight: 0.20
-    description: "Cheap on earnings and sales (PEG removed 2026-09-29: no vendor data)"
+    description: "Cheap on earnings, sales, EV/EBITDA and book (PEG removed 2026-09-29: no vendor data; earnings yield skipped as P/E's reciprocal)"
     metrics:
-      pe_ratio:  {direction: lower_better, missing: sector_median}
-      ps_ratio:  {direction: lower_better, missing: sector_median}
+      pe_ratio:     {direction: lower_better, missing: sector_median}
+      ps_ratio:     {direction: lower_better, missing: sector_median}
+      ev_to_ebitda: {direction: lower_better, missing: sector_median}
+      pb_ratio:     {direction: lower_better, missing: sector_median}
   quality:
     weight: 0.40
     description: "Profitable, cash-generative, conservatively financed (7 metrics since 2026-09-29)"
@@ -32,9 +35,9 @@ factors:
       sales_growth_q: {direction: higher_better, missing: sector_median}
   momentum:
     weight: 0.20
-    description: "Distance from 52-week low (trend proxy until trailing returns added)"
+    description: "12-1 trailing return on the live path (52-week-low proxy on the workbook path, which has no price history)"
     metrics:
-      pct_above_52w_low: {direction: higher_better, missing: sector_median}
+      mom_12_1: {direction: higher_better, missing: sector_median}
   lowvol:
     weight: 0.10
     description: "Lower trailing beta preferred (trimmed 2026-09-29 per lab down-weight verdict)"
