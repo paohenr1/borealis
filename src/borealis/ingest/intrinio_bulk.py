@@ -32,6 +32,7 @@ from collections import Counter
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -72,6 +73,13 @@ CALC_WANT = [
     "roe", "roa", "grossmargin", "operatingmargin", "ebitdamargin",
     "profitmargin", "currentratio", "assetturnover", "leverageratio",
     "ebittointerestex",  # interest coverage (financial health), added 2026-09-30
+    "debttoequity",  # exact live quality metric, added 2026-09-30 (both templates)
+]
+
+# Factor columns present in only one template's CALCULATIONS file. Kept when
+# present, NaN-filled otherwise (schema is fixed from the first file written).
+CALC_TEMPLATE_EXTRA = [
+    "grossmargin",  # INDU only; financials have no COGS concept -> NaN for FIN
 ]
 
 # TTM/FY rows give one trailing-twelve-months vintage per filing.
@@ -292,7 +300,16 @@ def load_calculations(raw_dir: Path | str, out_path: Path | str,
                     if use_cols is None:
                         use_cols = [c for c in CALC_WANT if c in chunk.columns]
                         report["columns"] = use_cols
-                    chunk = chunk[[c for c in use_cols if c in chunk.columns]].copy()
+                    # template-specific extras (CALC_TEMPLATE_EXTRA): keep when
+                    # this file has them, NaN-fill otherwise so the schema
+                    # stays fixed from the first file written.
+                    extra_here = [c for c in CALC_TEMPLATE_EXTRA
+                                  if c in chunk.columns and c not in use_cols]
+                    chunk = chunk[[c for c in use_cols if c in chunk.columns]
+                                  + extra_here].copy()
+                    for c in CALC_TEMPLATE_EXTRA:
+                        if c not in chunk.columns:
+                            chunk[c] = np.nan
                     n_period_all = chunk["fiscal_period"].value_counts()
                     chunk = chunk[chunk["fiscal_period"].isin(TTM_PERIODS)]
                     for p, n in n_period_all.items():
@@ -313,7 +330,9 @@ def load_calculations(raw_dir: Path | str, out_path: Path | str,
                         continue
                     id_cols = {"ticker", "company_id", "fundamental_id",
                                "fiscal_year", "fiscal_period"}
-                    for c in use_cols:
+                    for c in use_cols + [c for c in CALC_TEMPLATE_EXTRA
+                                         if c in chunk.columns
+                                         and c not in use_cols]:
                         if c in chunk.columns and c not in id_cols \
                                 and c not in ("end_date", "filing_date",
                                               "first_calculable_at"):
@@ -333,6 +352,89 @@ def load_calculations(raw_dir: Path | str, out_path: Path | str,
         qdir.mkdir(parents=True, exist_ok=True)
         pd.concat(qframes, ignore_index=True).to_parquet(
             qdir / "calculations_quarantined.parquet", index=False)
+    report["quarantined"] = dict(report["quarantined"])
+    report["skipped_period"] = dict(report["skipped_period"])
+    return report
+
+
+# ---- income statements (revenue) -------------------------------------------
+# totalrevenue is absent from the CALCULATIONS files, so revenue comes from
+# the INCOME_STATEMENT bulk files. Same TTM/FY vintage + PIT availability
+# logic as load_calculations (added 2026-09-30 for fcf_margin = fcf/revenue).
+INCOME_WANT = [
+    "fundamental_id", "company_id", "ticker", "end_date", "fiscal_year",
+    "fiscal_period", "filing_date", "first_calculable_at", "months",
+    "totalrevenue",
+]
+
+
+def income_files(raw_dir: Path | str) -> list[Path]:
+    files = sorted(Path(raw_dir).glob("*_INCOME_STATEMENT.zip"))
+    if not files:
+        raise FileNotFoundError(f"no INCOME_STATEMENT zips in {raw_dir}")
+    return files
+
+
+def load_income_statements(raw_dir: Path | str, out_path: Path | str,
+                           quarantine_dir: Path | str | None = None) -> dict:
+    """Stream INCOME_STATEMENT zips -> slim TTM/FY revenue Parquet w/ PIT dates."""
+    raw_dir = Path(raw_dir)
+    files = income_files(raw_dir)
+    report: dict = {"files": [p.name for p in files], "rows_in": 0,
+                    "rows_out": 0, "quarantined": Counter(),
+                    "skipped_period": Counter(), "columns": []}
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    writer: pq.ParquetWriter | None = None
+    qframes: list[pd.DataFrame] = []
+
+    for zpath in files:
+        with zipfile.ZipFile(zpath) as z:
+            csv_name = [n for n in z.namelist() if n.endswith(".csv")
+                        and "KEY" not in n][0]
+            with z.open(csv_name) as f:
+                for chunk in pd.read_csv(f, chunksize=200_000, dtype=str,
+                                         keep_default_na=False):
+                    report["rows_in"] += len(chunk)
+                    cols = [c for c in INCOME_WANT if c in chunk.columns]
+                    if not report["columns"]:
+                        report["columns"] = cols
+                    chunk = chunk[cols].copy()
+                    n_period_all = chunk["fiscal_period"].value_counts()
+                    chunk = chunk[chunk["fiscal_period"].isin(TTM_PERIODS)]
+                    for p, n in n_period_all.items():
+                        if p not in TTM_PERIODS:
+                            report["skipped_period"][p] = \
+                                report["skipped_period"].get(p, 0) + int(n)
+                    if not len(chunk):
+                        continue
+                    chunk = _calc_available(chunk)
+                    bad = chunk["available_date"].isna()
+                    if bad.any():
+                        qb = chunk[bad].copy()
+                        qb["quarantine_reason"] = "no_availability_date"
+                        report["quarantined"].update(qb["quarantine_reason"])
+                        qframes.append(qb)
+                        chunk = chunk[~bad]
+                    if not len(chunk):
+                        continue
+                    chunk["totalrevenue"] = pd.to_numeric(
+                        chunk["totalrevenue"], errors="coerce")
+                    chunk["end_date"] = pd.to_datetime(chunk["end_date"],
+                                                       errors="coerce")
+                    table = pa.Table.from_pandas(chunk, preserve_index=False)
+                    if writer is None:
+                        writer = pq.ParquetWriter(out_path, table.schema)
+                    writer.write_table(table)
+                    report["rows_out"] += len(chunk)
+        print(f"  {zpath.name} done", flush=True)
+    if writer is not None:
+        writer.close()
+    if quarantine_dir is not None and qframes:
+        qdir = Path(quarantine_dir)
+        qdir.mkdir(parents=True, exist_ok=True)
+        pd.concat(qframes, ignore_index=True).to_parquet(
+            qdir / "income_quarantined.parquet", index=False)
     report["quarantined"] = dict(report["quarantined"])
     report["skipped_period"] = dict(report["skipped_period"])
     return report

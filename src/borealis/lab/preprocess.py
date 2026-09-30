@@ -34,6 +34,11 @@ FACTOR_DIRECTION: dict[str, int] = {
     # comparison but is no longer in the sleeve (redundant with P/E).
     "pe": -1, "ps": -1, "pb": -1,
     "roe": 1, "roa": 1, "profit_margin": 1,
+    # Exact live quality metrics (added 2026-09-30): gross_margin from the
+    # INDU calculations template (NaN for financials, sector-imputed like
+    # the live path), fcf_margin = fcf / TTM revenue (panel-derived, same
+    # formula as universe_live.py), debt_to_equity (lower = better).
+    "gross_margin": 1, "fcf_margin": 1, "debt_to_equity": -1,
     "fcf": 1, "bvps": 1, "asset_turnover": 1,
     "debt_ebitda": -1, "leverage": -1,
     "rev_growth": 1, "ebitda_growth": 1, "ebit_growth": 1,
@@ -86,17 +91,18 @@ QUARANTINE_NONPOSITIVE = frozenset({"ev_ebitda", "pe", "ps", "pb"})
 # what actually runs:
 # - value: live 4-metric sleeve (P/E, P/S, EV/EBITDA, P/B). earn_yield
 #   stays individually scored for the P/E-vs-earnings-yield comparison.
-# - quality: live 8-metric sleeve minus gross_margin (not in panel) and
-#   with fcf/leverage standing in for fcf_margin/debt_to_equity (revenue
-#   and debt/equity tags not in panel). bvps/asset_turnover removed --
-#   not in the live model.
+# - quality: EXACT live 8-metric sleeve (2026-09-30 panel extension):
+#   roe, roa, gross_margin, profit_margin, fcf_margin (= fcf / revenue),
+#   debt_to_equity, debt_ebitda, interest_coverage. Raw fcf / leverage
+#   remain scored individually as diagnostics. bvps/asset_turnover removed
+#   -- not in the live model.
 # - lowvol: beta_252d = the live definition (252d beta vs SPY). vol_126d
 #   stays individually scored for the head-to-head.
 # - yield: standalone sleeve (div_yield); not in the live composite.
 SLEEVES: dict[str, list[str]] = {
     "value": ["pe", "ps", "ev_ebitda", "pb"],
-    "quality": ["roe", "roa", "profit_margin", "fcf", "debt_ebitda",
-                "leverage", "interest_coverage"],
+    "quality": ["roe", "roa", "gross_margin", "profit_margin", "fcf_margin",
+                "debt_to_equity", "debt_ebitda", "interest_coverage"],
     "growth": ["rev_growth", "ebitda_growth", "ebit_growth"],
     "yield": ["div_yield"],
     "momentum": ["mom_12m1m"],

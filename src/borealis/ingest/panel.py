@@ -56,6 +56,8 @@ FACTOR_RENAME = {
     "assetturnover": "asset_turnover",
     "leverageratio": "leverage",
     "ebittointerestex": "interest_coverage",  # financial health, added 2026-09-30
+    "debttoequity": "debt_to_equity",  # exact live quality metric, added 2026-09-30
+    "totalrevenue": "revenue",  # from income-statement slim, added 2026-09-30
 }
 
 FUND_META = {
@@ -100,8 +102,15 @@ def _add_returns(px: pd.DataFrame) -> pd.DataFrame:
 
 def build_panel(prices_path: Path | str, calcs_path: Path | str,
                 companies: pd.DataFrame, out_dir: Path | str,
-                ticker_batch: int = 2500) -> dict:
-    """Build the PIT panel, writing partitioned Parquet. Returns a report."""
+                ticker_batch: int = 2500,
+                revenue_path: Path | str | None = None) -> dict:
+    """Build the PIT panel, writing partitioned Parquet. Returns a report.
+
+    revenue_path (optional): slim TTM totalrevenue Parquet from
+    load_income_statements; merged PIT onto price dates (independent of
+    calc vintages) so the panel carries ``revenue`` and derived
+    ``fcf_margin``.
+    """
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     report: dict = {"batches": 0, "rows": 0, "tickers": 0,
@@ -109,6 +118,8 @@ def build_panel(prices_path: Path | str, calcs_path: Path | str,
 
     prices_ds = ds.dataset(prices_path, format="parquet")
     calcs_ds = ds.dataset(calcs_path, format="parquet")
+    rev_ds = (ds.dataset(revenue_path, format="parquet")
+              if revenue_path is not None else None)
     tickers = sorted(
         t.as_py() for t in
         prices_ds.to_table(columns=["ticker"]).column("ticker").unique()
@@ -132,7 +143,44 @@ def build_panel(prices_path: Path | str, calcs_path: Path | str,
             pd.Series(pd.NaT, index=panel.index))
         for c in _fund_factor_cols + _fund_meta_cols:
             panel[c] = np.nan
+        # revenue comes from the income-statement slim, not the calcs slim
+        panel["totalrevenue"] = np.nan
         return panel
+
+    def _merge_revenue(panel: pd.DataFrame, filt) -> pd.DataFrame:
+        """PIT-merge TTM totalrevenue vintages onto panel price dates.
+
+        Each source carries its own availability date: at price date D,
+        revenue is the latest income-statement vintage with
+        available_date <= D, independent of the calculations vintages
+        (mirrors how the live model reads each tag at its latest value).
+        """
+        if rev_ds is None:
+            if "totalrevenue" not in panel.columns:
+                panel["totalrevenue"] = np.nan
+            return panel
+        rv = rev_ds.to_table(
+            filter=filt,
+            columns=["ticker", "available_date", "totalrevenue"]).to_pandas()
+        if not len(rv):
+            panel["totalrevenue"] = np.nan
+            return panel
+        rv["ticker"] = rv["ticker"].astype(str)
+        rv["available_date"] = pd.to_datetime(rv["available_date"])
+        rv["totalrevenue"] = pd.to_numeric(rv["totalrevenue"], errors="coerce")
+        rv = rv.dropna(subset=["available_date"])
+        rv = rv.sort_values("available_date", kind="stable")
+        rv = rv.drop_duplicates(["ticker", "available_date"], keep="last")
+        rv = rv.rename(columns={"available_date": "rev_available_date"})
+        # merge_asof needs the join keys globally sorted (pandas 2.1),
+        # same pattern as the price <-> fundamentals merge below
+        merged = pd.merge_asof(
+            panel.sort_values("date"),
+            rv.sort_values("rev_available_date"),
+            left_on="date", right_on="rev_available_date",
+            by="ticker", direction="backward",
+        )
+        return merged.drop(columns=["rev_available_date"])
 
     for b, i in enumerate(range(0, len(tickers), ticker_batch)):
         batch = tickers[i:i + ticker_batch]
@@ -153,11 +201,22 @@ def build_panel(prices_path: Path | str, calcs_path: Path | str,
                                   by="ticker", direction="backward")
         else:
             panel = _empty_fund_frame(px)
+        # revenue merges PIT onto price dates, independent of calc vintages
+        panel = _merge_revenue(panel, filt)
 
         panel["sector"] = panel["company_id"].map(sector_map).fillna("unknown")
         panel = _add_returns(panel)
         panel["has_suffix"] = panel["ticker"].str.contains(r"[.\-]", regex=True)
         panel = panel.rename(columns={**FACTOR_RENAME, **FUND_META})
+        # fcf_margin = TTM fcf / TTM revenue, mirroring universe_live.py.
+        # NaN if either leg missing or revenue == 0. Both legs are PIT.
+        if "fcf" in panel.columns and "revenue" in panel.columns:
+            _fcf = pd.to_numeric(panel["fcf"], errors="coerce")
+            _rev = pd.to_numeric(panel["revenue"], errors="coerce")
+            panel["fcf_margin"] = (_fcf / _rev).where(
+                _fcf.notna() & _rev.notna() & (_rev != 0))
+        else:
+            panel["fcf_margin"] = np.nan
         panel["year"] = panel["date"].dt.year
 
         for year, grp in panel.groupby("year"):

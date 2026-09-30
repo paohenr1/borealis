@@ -248,5 +248,174 @@ class TestPanel(unittest.TestCase):
         self.assertTrue((rets.abs() < 0.05).all())
 
 
+def _write_income_zip(path: Path, rows: list[dict]):
+    cols = intrinio_bulk.INCOME_WANT
+    df = pd.DataFrame(rows, columns=cols)
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("X_INCOME_STATEMENT.csv", df.to_csv(index=False))
+
+
+class TestCalcTemplateExtra(unittest.TestCase):
+    """grossmargin is INDU-only: kept when present, NaN-filled otherwise."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.raw = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _row(self, **kw):
+        base = {c: "" for c in intrinio_bulk.CALC_WANT}
+        base.update({
+            "fundamental_id": "fun_1", "company_id": "com_1", "ticker": "AAA",
+            "end_date": "2024-12-31", "fiscal_year": "2024",
+            "fiscal_period": "FY", "filing_date": "2025-02-01",
+            "first_calculable_at": "", "months": "12",
+        })
+        base.update(kw)
+        return base
+
+    def _write_zip(self, path, rows, cols):
+        df = pd.DataFrame(rows, columns=cols)
+        with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("X_CALCULATIONS.csv", df.to_csv(index=False))
+
+    def test_fin_first_indu_keeps_grossmargin(self):
+        fin_cols = [c for c in intrinio_bulk.CALC_WANT if c != "grossmargin"]
+        self._write_zip(self.raw / "US_FIN_CALCULATIONS.zip",
+                        [self._row(ticker="FINCO")], fin_cols)
+        indu_cols = list(intrinio_bulk.CALC_WANT)
+        self._write_zip(self.raw / "US_INDU_CALCULATIONS.zip",
+                        [self._row(ticker="INDUCO", grossmargin="42.5")],
+                        indu_cols)
+        rep = intrinio_bulk.load_calculations(self.raw, self.raw / "c.parquet")
+        self.assertEqual(rep["rows_out"], 2)
+        df = pd.read_parquet(self.raw / "c.parquet")
+        self.assertIn("grossmargin", df.columns)
+        fin_v = df.loc[df["ticker"] == "FINCO", "grossmargin"].iloc[0]
+        indu_v = df.loc[df["ticker"] == "INDUCO", "grossmargin"].iloc[0]
+        self.assertTrue(pd.isna(fin_v))
+        self.assertAlmostEqual(float(indu_v), 42.5)
+
+    def test_debttoequity_in_both_templates(self):
+        self._write_zip(self.raw / "US_FIN_CALCULATIONS.zip",
+                        [self._row(ticker="FINCO", debttoequity="1.5")],
+                        [c for c in intrinio_bulk.CALC_WANT if c != "grossmargin"])
+        rep = intrinio_bulk.load_calculations(self.raw, self.raw / "c.parquet")
+        df = pd.read_parquet(self.raw / "c.parquet")
+        self.assertIn("debttoequity", df.columns)
+        self.assertAlmostEqual(
+            float(df.loc[df["ticker"] == "FINCO", "debttoequity"].iloc[0]), 1.5)
+
+
+class TestIncomeStatements(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.raw = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _row(self, **kw):
+        base = {c: "" for c in intrinio_bulk.INCOME_WANT}
+        base.update({
+            "fundamental_id": "fun_1", "company_id": "com_1", "ticker": "AAA",
+            "end_date": "2024-12-31", "fiscal_year": "2024",
+            "fiscal_period": "Q3TTM", "filing_date": "2025-02-01",
+            "first_calculable_at": "2025-02-03", "months": "12",
+            "totalrevenue": "1000.0",
+        })
+        base.update(kw)
+        return base
+
+    def test_ttm_filter_pit_and_numeric(self):
+        rows = [
+            self._row(),                                              # kept
+            self._row(fundamental_id="fun_2", fiscal_period="Q4",
+                      totalrevenue="250.0"),                           # quarterly -> skipped
+            self._row(fundamental_id="fun_3", filing_date="",
+                      first_calculable_at=""),                         # no dates -> quarantined
+        ]
+        _write_income_zip(self.raw / "US_INDU_INCOME_STATEMENT.zip", rows)
+        _write_income_zip(self.raw / "US_FIN_INCOME_STATEMENT.zip", [])
+        rep = intrinio_bulk.load_income_statements(self.raw,
+                                                   self.raw / "r.parquet",
+                                                   self.raw / "_q")
+        self.assertEqual(rep["rows_out"], 1)
+        self.assertEqual(rep["quarantined"].get("no_availability_date"), 1)
+        df = pd.read_parquet(self.raw / "r.parquet")
+        # PIT date = later of filing_date / first_calculable_at
+        self.assertEqual(str(df["available_date"].iloc[0])[:10], "2025-02-03")
+        self.assertAlmostEqual(float(df["totalrevenue"].iloc[0]), 1000.0)
+
+
+class TestPanelRevenue(unittest.TestCase):
+    """revenue PIT-merge + fcf_margin derivation in build_panel."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.d = Path(self.tmp.name)
+        dates = pd.date_range("2024-01-02", periods=30, freq="B")
+        px = []
+        for t, base in [("AAA", 100.0), ("BBB", 50.0)]:
+            for i, d in enumerate(dates):
+                px.append(_price_row(t, d.strftime("%Y-%m-%d"),
+                                     base + i, base + i,
+                                     sec=f"sec_{t}", co=f"com_{t}"))
+        raw = self.d / "raw"
+        raw.mkdir()
+        _write_price_zip(raw / "stock_prices_uscomp_since_2020-01-24_file-1.zip",
+                         px, "p.csv")
+        intrinio_bulk.load_prices(raw, self.d / "prices.parquet")
+        cols = intrinio_bulk.CALC_WANT
+        fu = pd.DataFrame([
+            {**{c: "" for c in cols}, **{"company_id": "com_AAA", "ticker": "AAA",
+                "end_date": "2023-12-31", "fiscal_year": "2023",
+                "fiscal_period": "FY", "filing_date": "2024-01-10",
+                "first_calculable_at": "", "freecashflow": "500.0"}},
+        ])
+        fu = intrinio_bulk._calc_available(fu)
+        fu.to_parquet(self.d / "calcs.parquet", index=False)
+        rv = pd.DataFrame([
+            {**{c: "" for c in intrinio_bulk.INCOME_WANT},
+             **{"company_id": "com_AAA", "ticker": "AAA",
+                "end_date": "2023-12-31", "fiscal_year": "2023",
+                "fiscal_period": "FY", "filing_date": "2024-01-15",
+                "first_calculable_at": "", "totalrevenue": "2000.0"}},
+        ])
+        rv = intrinio_bulk._calc_available(rv)
+        rv.to_parquet(self.d / "rev.parquet", index=False)
+        self.companies = pd.DataFrame({
+            "company_id": ["com_AAA", "com_BBB"],
+            "sector": ["technology", "energy"],
+        })
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_revenue_pit_and_fcf_margin(self):
+        panel.build_panel(self.d / "prices.parquet", self.d / "calcs.parquet",
+                          self.companies, self.d / "panel", ticker_batch=10,
+                          revenue_path=self.d / "rev.parquet")
+        p = pd.read_parquet(self.d / "panel")
+        self.assertIn("revenue", p.columns)
+        self.assertIn("fcf_margin", p.columns)
+        aaa = p[p["ticker"] == "AAA"].sort_values("date")
+        # revenue vintage available 2024-01-15; before that -> NaN (no lookahead)
+        self.assertTrue(aaa.loc[aaa["date"] < "2024-01-15", "revenue"].isna().all())
+        late = aaa[aaa["date"] >= "2024-01-15"]
+        self.assertTrue((late["revenue"] == 2000.0).all())
+        # fcf vintage available 2024-01-10 -> fcf_margin = 500/2000 = 0.25
+        # only once BOTH legs are available
+        self.assertTrue(aaa.loc[aaa["date"] < "2024-01-15",
+                                "fcf_margin"].isna().all())
+        self.assertTrue((late["fcf_margin"] == 0.25).all())
+        # BBB has no fundamentals -> NaN, never invented
+        bbb = p[p["ticker"] == "BBB"]
+        self.assertTrue(bbb["revenue"].isna().all())
+        self.assertTrue(bbb["fcf_margin"].isna().all())
+
+
 if __name__ == "__main__":
     unittest.main()

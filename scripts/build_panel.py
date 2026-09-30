@@ -55,6 +55,15 @@ def main() -> None:
         print("[2/3] calculations: streaming bulk zips ...", flush=True)
         report["calculations"] = intrinio_bulk.load_calculations(raw, calcs_path, qdir)
 
+    revenue_path = out / "revenue_slim.parquet"
+    if revenue_path.exists() and not args.rebuild:
+        print(f"[2b/3] revenue: reusing {revenue_path}")
+        report["revenue"] = {"reused": True}
+    else:
+        print("[2b/3] revenue: streaming income-statement zips ...", flush=True)
+        report["revenue"] = intrinio_bulk.load_income_statements(raw, revenue_path,
+                                                                 qdir)
+
     print("[3/3] panel: point-in-time join ...", flush=True)
     companies = intrinio_bulk.load_companies(raw)
     companies.to_parquet(out / "companies.parquet", index=False)
@@ -67,7 +76,8 @@ def main() -> None:
     else:
         report["panel"] = panel.build_panel(prices_path, calcs_path,
                                             companies, panel_dir,
-                                            ticker_batch=args.ticker_batch)
+                                            ticker_batch=args.ticker_batch,
+                                            revenue_path=revenue_path)
 
     rep_path = out / "_load_report.json"
     rep_path.write_text(json.dumps(report, indent=1, default=str))
