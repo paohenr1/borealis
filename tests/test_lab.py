@@ -160,11 +160,12 @@ def test_dropped_factors_absent_from_universe():
             _frame([{"date": "2020-01-31", "ticker": "A", "sector": "tech"}]), "pe")
 
 
-def test_value_sleeve_is_two_metrics():
-    value_factors = {"ev_ebitda", "earn_yield"}
+def test_value_sleeve_is_four_metrics():
+    value_factors = {"pe", "ps", "ev_ebitda", "pb"}
     assert value_factors <= set(preprocess.FACTOR_DIRECTION)
-    assert not ({"pe", "pb", "ps", "ev_ebit", "ev_fcff"}
-                & set(preprocess.FACTOR_DIRECTION))
+    assert value_factors == set(preprocess.SLEEVES["value"])
+    assert not ({"earn_yield", "ev_ebit", "ev_fcff"}
+                & set(preprocess.SLEEVES["value"]))
 
 
 def test_size_orientation_flipped_regime_dependent():

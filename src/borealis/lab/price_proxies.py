@@ -56,30 +56,50 @@ def compute_price_proxies(prices_path: str | Path,
     df = df[df["date"] >= cutoff]
     df = df.sort_values(["ticker", "date"]).reset_index(drop=True)
 
-    by_ticker = df.groupby("ticker", sort=False)["adj_close"]
-    df["mom_12m1m"] = (by_ticker.shift(MOM_SKIP) /
-                       by_ticker.shift(MOM_LOOKBACK) - 1)
-    df["vol_126d"] = (
-        by_ticker.transform(
-            lambda s: s.pct_change()
-            .rolling(VOL_WINDOW, min_periods=VOL_WINDOW).std(ddof=1))
-        * np.sqrt(252)
-    )
-    # 252d beta vs SPY on daily simple returns (the live low-vol definition).
-    df["ret"] = by_ticker.transform(lambda s: s.pct_change())
-    spy_ret = (df.loc[df["ticker"] == BETA_BENCHMARK, ["date", "ret"]]
-                 .rename(columns={"ret": "spy_ret"}))
-    m = df.merge(spy_ret, on="date", how="left")
+    # 252d beta vs SPY needs the benchmark's daily returns; compute once.
+    # (Guard: pct_change() on an empty Series raises on old pandas.)
+    spy_px = df.loc[df["ticker"] == BETA_BENCHMARK,
+                    ["date", "adj_close"]].sort_values("date")
+    if len(spy_px):
+        spy_ret = (spy_px.set_index("date")["adj_close"].pct_change()
+                   .rename("spy_ret"))
+    else:
+        spy_ret = pd.Series(dtype=float, name="spy_ret")
+        spy_ret.index = pd.DatetimeIndex([], name="date")
 
-    def _beta(g: pd.DataFrame) -> pd.Series:
-        r, s = g["ret"], g["spy_ret"]
-        cov = r.rolling(BETA_WINDOW, min_periods=BETA_WINDOW).cov(s)
-        var = s.rolling(BETA_WINDOW, min_periods=BETA_WINDOW).var(ddof=1)
-        return (cov / var).rename("beta_252d")
-
-    beta = m.groupby("ticker", sort=False).apply(_beta)
-    beta.index = beta.index.droplevel(0)  # back to the original row index
-    df["beta_252d"] = beta.sort_index()
-    out = df.loc[df["date"].isin(dates),
-                 ["ticker", "date", "mom_12m1m", "vol_126d", "beta_252d"]]
+    # Ticker-chunked: every op below is per-ticker, so chunking is exact and
+    # keeps peak memory bounded on small boxes.
+    tickers = df["ticker"].unique()
+    n_chunks = max(1, min(16, int(np.ceil(len(tickers) / 1500))))
+    out_parts = []
+    for chunk in np.array_split(tickers, n_chunks):
+        sub = df[df["ticker"].isin(chunk)].copy()
+        by_ticker = sub.groupby("ticker", sort=False)["adj_close"]
+        sub["mom_12m1m"] = (by_ticker.shift(MOM_SKIP) /
+                            by_ticker.shift(MOM_LOOKBACK) - 1)
+        sub["vol_126d"] = (
+            by_ticker.transform(
+                lambda s: s.pct_change()
+                .rolling(VOL_WINDOW, min_periods=VOL_WINDOW).std(ddof=1))
+            * np.sqrt(252)
+        )
+        sub["ret"] = by_ticker.transform(lambda s: s.pct_change())
+        sub["spy_ret"] = sub["date"].map(spy_ret)
+        # Per-ticker loop + concat: groupby.apply's return shape varies
+        # across pandas versions (single-group case returns a DataFrame),
+        # so we avoid it and keep the original row index explicitly.
+        betas = []
+        for _, g in sub.groupby("ticker", sort=False):
+            r, s = g["ret"], g["spy_ret"]
+            cov = r.rolling(BETA_WINDOW, min_periods=BETA_WINDOW).cov(s)
+            var = s.rolling(BETA_WINDOW, min_periods=BETA_WINDOW).var(ddof=1)
+            betas.append((cov / var).rename("beta_252d"))
+        beta = pd.concat(betas).sort_index() if betas else pd.Series(
+            np.nan, index=sub.index, name="beta_252d")
+        sub["beta_252d"] = beta.sort_index().values
+        out_parts.append(sub.loc[sub["date"].isin(dates),
+                                 ["ticker", "date", "mom_12m1m", "vol_126d",
+                                  "beta_252d"]])
+        del sub, betas, beta
+    out = pd.concat(out_parts, ignore_index=True)
     return out.reset_index(drop=True)

@@ -28,7 +28,7 @@ import pyarrow.dataset as ds
 from borealis.backtest.engine import BacktestConfig, BacktestResult, run_backtest
 from borealis.lab import composite as lab_composite
 from borealis.lab import preprocess, price_proxies
-from borealis.lab.run import load_lab_frame, month_end_dates
+from borealis.lab.run import PROXY_FACTORS, load_lab_frame, month_end_dates
 
 MIN_PX_SENSITIVITY = 5.0
 
@@ -49,8 +49,7 @@ def build_signal_frame(panel_dir: str | Path,
     dataset = ds.dataset(str(panel_dir), format="parquet", partitioning="hive")
     if factors is None:
         factors = preprocess.available_factors(dataset.schema.names)
-        factors = factors + [f for f in ("mom_12m1m", "vol_126d")
-                             if f not in factors]
+        factors = factors + [f for f in PROXY_FACTORS if f not in factors]
     frame = load_lab_frame(panel_dir, month_ends, factors, need_returns=False)
     proxies = price_proxies.compute_price_proxies(prices_path, month_ends)
     frame = frame.merge(proxies, on=["ticker", "date"], how="left")

@@ -185,5 +185,42 @@ class TestTradeCalendar(unittest.TestCase):
                           pd.Timestamp("2020-03-02")])
 
 
+class TestBuildSignalFrameProxies(unittest.TestCase):
+    def test_default_factors_cover_every_proxy_factor(self):
+        # Regression: build_signal_frame once hardcoded
+        # ("mom_12m1m", "vol_126d") as its proxy list, so when beta_252d
+        # joined PROXY_FACTORS the lowvol sleeve silently came out empty.
+        # Every sleeve built on a proxy factor must come out non-empty.
+        import tempfile
+        rng = np.random.default_rng(0)
+        n = 260
+        dates = pd.bdate_range("2020-01-01", periods=n)
+        spy_rets = rng.normal(0.0005, 0.01, n)
+        aaa_rets = 1.5 * spy_rets + rng.normal(0, 0.005, n)
+        px = {"SPY": 100 * np.cumprod(1 + spy_rets),
+              "AAA": 100 * np.cumprod(1 + aaa_rets)}
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            prow = []
+            for t, arr in px.items():
+                for d, p in zip(dates, arr):
+                    prow.append({"ticker": t, "date": d, "adj_close": p})
+            pd.DataFrame(prow).to_parquet(td / "prices.parquet")
+            panel_dir = td / "panel" / "year=2020"
+            panel_dir.mkdir(parents=True)
+            frow = []
+            for t in px:
+                for d in dates:
+                    frow.append({"ticker": t, "date": d, "sector": "Tech",
+                                 "roe": 0.10})
+            pd.DataFrame(frow).to_parquet(panel_dir / "part.parquet")
+            sig = pb.build_signal_frame(td / "panel", td / "prices.parquet",
+                                        [dates[-1]])
+        self.assertTrue(sig["sleeve_lowvol"].notna().any(),
+                        "sleeve_lowvol empty -- beta_252d was dropped")
+        self.assertTrue(sig["sleeve_momentum"].notna().any(),
+                        "sleeve_momentum empty -- mom_12m1m was dropped")
+
+
 if __name__ == "__main__":
     unittest.main()

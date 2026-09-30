@@ -131,8 +131,15 @@ def test_expected_sleeves_present():
 
 # ---------- composite ----------
 
-def test_sleeve_weights_sum_to_one():
-    assert sum(lab_composite.SLEEVE_WEIGHTS.values()) == pytest.approx(1.0)
+def test_sleeve_weights_valid():
+    # weights need not sum to 1: composite_zscore renormalizes per ticker,
+    # and sleeves can carry 0 weight as documented negative controls
+    # (growth) or live outside the composite (yield is standalone).
+    w = lab_composite.SLEEVE_WEIGHTS
+    assert set(w) <= set(SLEEVES)
+    assert all(v >= 0 for v in w.values())
+    assert sum(w.values()) > 0
+    assert w["growth"] == 0  # documented negative control
 
 
 def test_composite_zscore_weighted_mean():
@@ -171,3 +178,36 @@ def test_sleeve_zscores_pairwise_complete():
     frame = pd.DataFrame({"z_a": [1.0, np.nan], "z_b": [3.0, 5.0]})
     out = lab_composite.sleeve_zscores(frame, sleeves={"s1": ["a", "b"]})
     assert out["sleeve_s1"].tolist() == pytest.approx([2.0, 5.0])
+
+
+# ---------- beta vs SPY ----------
+
+def _beta_prices(n, seed=1):
+    rng = np.random.default_rng(seed)
+    spy_rets = rng.normal(0.0005, 0.01, n)
+    aaa_rets = 1.5 * spy_rets + rng.normal(0, 0.005, n)
+    return _prices({"SPY": list(100 * np.cumprod(1 + spy_rets)),
+                    "AAA": list(100 * np.cumprod(1 + aaa_rets))})
+
+
+def test_beta_spy_is_one(tmp_path):
+    out = _proxies(_beta_prices(260), tmp_path)
+    b = out.set_index("ticker")["beta_252d"]
+    assert b["SPY"] == pytest.approx(1.0)  # beta vs itself is 1 by construction
+
+
+def test_beta_tracks_market_sensitivity(tmp_path):
+    out = _proxies(_beta_prices(260), tmp_path)
+    b = out.set_index("ticker")["beta_252d"]["AAA"]
+    assert b == pytest.approx(1.5, abs=0.15)  # built with 1.5x market loading
+
+
+def test_beta_insufficient_history_is_nan(tmp_path):
+    df = _prices({"SPY": [100.0 + i for i in range(100)],
+                  "AAA": [100.0 + i for i in range(100)]})
+    out = _proxies(df, tmp_path)
+    assert out["beta_252d"].isna().all()
+
+
+def test_beta_orientation_is_lower_better():
+    assert FACTOR_DIRECTION["beta_252d"] == -1
