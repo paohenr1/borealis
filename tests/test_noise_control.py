@@ -87,7 +87,7 @@ class TestNoiseNullIC(unittest.TestCase):
         # Fully deterministic: seeded noise vs independent seeded returns.
         # The null must not clear significance.
         rng = np.random.default_rng(7)
-        dates = pd.date_range("2020-01-31", periods=120, freq="M")
+        dates = pd.date_range("2020-01-31", periods=120, freq="ME")
         rows = []
         for d in dates:
             tickers = [f"T{i:03d}" for i in range(60)]

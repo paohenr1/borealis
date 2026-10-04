@@ -40,7 +40,7 @@ class TestSleeveSignalMatrix(unittest.TestCase):
 
 
 def _fake_result(q1=0.01, q3=0.02, q5=0.03, n=12):
-    idx = pd.date_range("2021-01-31", periods=n, freq="M")
+    idx = pd.date_range("2021-01-31", periods=n, freq="ME")
     qret = pd.DataFrame({"Q1": np.full(n, q1), "Q2": 0.0,
                          "Q3": np.full(n, q3), "Q4": 0.0,
                          "Q5": np.full(n, q5)}, index=idx)

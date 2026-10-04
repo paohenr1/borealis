@@ -46,7 +46,7 @@ class TestSpyRegimes(unittest.TestCase):
 
 class TestIcByRegime(unittest.TestCase):
     def test_splits_correctly(self):
-        idx = pd.date_range("2021-01-31", periods=10, freq="M")
+        idx = pd.date_range("2021-01-31", periods=10, freq="ME")
         ics = pd.Series([0.04, 0.05, 0.06, 0.045, 0.055,
                          -0.02, -0.01, -0.015, -0.005, -0.012], index=idx)
         reg = pd.DataFrame({"mkt_up": [True] * 5 + [False] * 5,
