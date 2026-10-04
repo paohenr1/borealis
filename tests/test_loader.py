@@ -16,6 +16,9 @@ FIXTURE = Path(__file__).resolve().parents[1] / "data" / "raw" / "ranks_earnings
 class TestLoader(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if not FIXTURE.exists():
+            raise unittest.SkipTest(
+                f"requires licensed workbook (not in git): {FIXTURE.name}")
         cls.df = load_universe(FIXTURE)
 
     def test_row_count_and_sectors(self):

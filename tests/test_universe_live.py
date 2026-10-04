@@ -112,6 +112,8 @@ def _small_universe_df():
     })
 
 
+@unittest.skipUnless(UNIVERSE_CSV.exists(),
+                     "requires licensed universe CSV (not in git): data/raw/universe_520.csv")
 class TestUniverseCsv(unittest.TestCase):
     def test_shape_and_membership(self):
         df = pd.read_csv(UNIVERSE_CSV, dtype=str)
@@ -156,6 +158,8 @@ class TestSectorMap(unittest.TestCase):
         zf = raw / "companies.zip"
         if not zf.exists():
             self.skipTest("bulk data not downloaded")
+        if not UNIVERSE_CSV.exists():
+            self.skipTest("licensed universe CSV not in git")
         z = zipfile.ZipFile(zf)
         df = pd.read_csv(z.open("companies.csv"), low_memory=False,
                          usecols=["TICKER", "INDUSTRY_GROUP_NAME"])
