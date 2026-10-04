@@ -3,6 +3,7 @@ data/raw/
 data/processed/intrinio/
 # regenerable snapshot output (derived from the licensed workbook)
 data/processed/scores.csv
+data/processed/scores_live_*.csv
 
 # ---- python ----
 __pycache__/
