@@ -22,6 +22,28 @@ The ranking orders attention; this file records what the attention found.
 |------|--------|---------|----------------|
 |      |        |         |                |
 
+### October 2026 shortlist — DRAFT (2026-10-05, ranking asof 2026-09-30)
+
+Same 15 names as September (no fresh ranking run; no ★ new entries). Every line below is a draft starting point — mark, edit, or replace as you research.
+
+| ticker | draft verdict | draft thesis |
+|--------|---------------|--------------|
+| AES | deep-dive | Cheapest multiple on the board (P/E 5.6) in a defensive sector — find out what the market is pricing in. |
+| GM | watch | Value flag on price action, not earnings (P/E 35.6, P/S 0.4) — check whether the P/E spike is one-off charges first. |
+| FDX | watch | Classic cyclical value; the question is where we are in the freight cycle. |
+| CNC | deep-dive | Rank rests on price-to-sales with no meaningful earnings multiple — Medicaid/regulatory exposure is the make-or-break question. |
+| BG | watch | Agribusiness at P/S 0.2; commodity-cycle earnings — check grain/oilseed margin outlook. |
+| CAH | watch | Thin-margin health-care distributor; the value case needs a margin or volume story. |
+| PRU | watch | Insurer value at P/E 9.6 — check rate sensitivity and book-value trend. |
+| EIX | watch | Momentum flag on a name 37% below its high — rebound or value trap; check the California wildfire/regulatory overhang. |
+| F | watch | Deep value with no earnings multiple, 30% off highs — balance sheet and EV-transition capex are the questions. |
+| TGT | watch | Momentum near 52-week highs — consumer health into the holiday quarter is the swing factor. |
+| CTSH | deep-dive | Cheapest tech name, a third below highs (P/E 8.3) — AI-disruption fear vs. actual bookings is the question. |
+| HPQ | watch | PC-cycle exposure at P/E 10.2 — check print vs. personal-systems mix. |
+| SWK | watch | Highest multiple of the value cluster (P/E 23.0) — earnings have to justify the rank. |
+| DAL | watch | Airline value is fuel-price and demand-cycle dependent — check unit-revenue trend. |
+| PSX | watch | Refiner at P/E 9.6 — crack-spread cycle drives everything here. |
+
 ## Quarterly review prompts
 
 - Which drivers (value / momentum / lowvol) produced the most watch/deep-dive verdicts? Which produced passes?
