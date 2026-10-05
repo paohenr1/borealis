@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f2f1ed" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#111311" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
+  <title>Borealis Research Dossier</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --paper: #f2f1ed;
+      --paper-2: #e8e7e1;
+      --ink: #131714;
+      --ink-soft: #464d48;
+      --rule: #babdb7;
+      --rule-strong: #6f766f;
+      --green: #0b6b48;
+      --green-wash: #dcebe3;
+      --red: #a63c2f;
+      --red-wash: #f0ded9;
+      --amber: #956a16;
+      --amber-wash: #eee6ce;
+      --blue: #235e7a;
+      --focus: #0b6b48;
+      --code: #e5e4de;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #111311;
+        --paper-2: #191c19;
+        --ink: #f0f1ed;
+        --ink-soft: #adb5ae;
+        --rule: #3b413c;
+        --rule-strong: #777f78;
+        --green: #66c499;
+        --green-wash: #17382a;
+        --red: #f08b78;
+        --red-wash: #3c211e;
+        --amber: #d9b35c;
+        --amber-wash: #382f1b;
+        --blue: #78b9d7;
+        --focus: #66c499;
+        --code: #1f231f;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: 16px;
+      line-height: 1.58;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    .shell { max-width: 1440px; margin: 0 auto; }
+    .mast {
+      min-height: 92vh;
+      padding: clamp(32px, 6vw, 86px) clamp(22px, 7vw, 110px) 48px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, .55fr);
+      grid-template-rows: auto 1fr auto;
+      gap: 38px 64px;
+      border-bottom: 1px solid var(--rule-strong);
+      position: relative;
+      overflow: hidden;
+    }
+    .mast::after {
+      content: "";
+      position: absolute;
+      right: -8vw;
+      bottom: -23vw;
+      width: 48vw;
+      height: 48vw;
+      border: 1px solid var(--rule);
+      border-radius: 50%;
+      box-shadow: 0 0 0 5vw var(--paper), 0 0 0 calc(5vw + 1px) var(--rule), 0 0 0 11vw var(--paper), 0 0 0 calc(11vw + 1px) var(--rule);
+      opacity: .5;
+      pointer-events: none;
+    }
+    .mast-meta {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px 24px;
+      border-top: 4px solid var(--ink);
+      padding-top: 13px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .kicker { color: var(--green); font-weight: 600; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      margin: 0;
+      max-width: 890px;
+      font-family: "Source Serif 4", serif;
+      font-size: clamp(54px, 7.8vw, 116px);
+      line-height: .92;
+      letter-spacing: -.052em;
+      font-weight: 700;
+    }
+    .mast-copy { align-self: end; position: relative; z-index: 1; }
+    .snapshot-stamp {
+      display: inline-block;
+      margin: 28px 0 0;
+      padding-top: 10px;
+      border-top: 1px solid var(--rule-strong);
+      color: var(--ink-soft);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .mast-side {
+      align-self: end;
+      position: relative;
+      z-index: 1;
+      background: var(--paper);
+      border-top: 1px solid var(--rule-strong);
+      padding-top: 18px;
+    }
+    .verdict-label, .micro-label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--ink-soft);
+    }
+    .verdict-line {
+      font-family: "Source Serif 4", serif;
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 1.08;
+      margin: 12px 0 22px;
+      color: var(--red);
+    }
+    .snapshot { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--rule); }
+    .snapshot li { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
+    .snapshot strong { font-family: "IBM Plex Mono", monospace; font-weight: 500; }
+    .mast-foot {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 20px;
+      position: relative;
+      z-index: 1;
+    }
+    .scroll-note { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-soft); }
+    .quote-short { margin: 0; max-width: 440px; text-align: right; font-family: "Source Serif 4", serif; font-size: 17px; }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      gap: 0 70px;
+      padding: 0 clamp(22px, 7vw, 110px) 90px;
+    }
+    .rail {
+      padding-top: 56px;
+    }
+    .rail-inner { position: sticky; top: 24px; }
+    .rail-title { margin-bottom: 16px; }
+    .rail ol { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+    .rail a {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 8px;
+      text-decoration: none;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--rule);
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+    .rail a span { font-family: "IBM Plex Mono", monospace; color: var(--ink); }
+    .rail a:hover, .rail a.active { color: var(--green); }
+    .main { min-width: 0; }
+    section {
+      padding: 82px 0 92px;
+      border-bottom: 1px solid var(--rule-strong);
+      scroll-margin-top: 20px;
+    }
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(240px, .48fr);
+      gap: 32px;
+      align-items: end;
+      margin-bottom: 46px;
+    }
+    .section-num { font-family: "IBM Plex Mono", monospace; color: var(--green); font-size: 12px; margin-bottom: 10px; }
+    h2 {
+      margin-bottom: 0;
+      font-family: "Source Serif 4", serif;
+      font-size: clamp(38px, 5vw, 68px);
+      line-height: 1;
+      letter-spacing: -.035em;
+    }
+    .section-intro { margin: 0; color: var(--ink-soft); font-size: 17px; }
+    .prose { max-width: 760px; }
+    .prose p { margin-bottom: 20px; }
+    .lead { font-family: "Source Serif 4", serif; font-size: 23px; line-height: 1.45; }
+    .origin-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 48px; align-items: start; }
+    .path { border-top: 1px solid var(--ink); }
+    .path-row { display: grid; grid-template-columns: 32px 1fr; gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--rule); }
+    .path-row b { font-family: "IBM Plex Mono", monospace; font-weight: 500; color: var(--green); }
+    .path-row p { margin: 0; font-size: 14px; color: var(--ink-soft); }
+    .path-row strong { display: block; color: var(--ink); margin-bottom: 2px; }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: 1fr 36px 1fr 36px 1fr;
+      align-items: stretch;
+      margin-top: 10px;
+    }
+    .arch-node { padding: 24px 22px; background: var(--paper-2); border-top: 4px solid var(--ink); }
+    .arch-node.primary { border-top-color: var(--green); }
+    .arch-node .n { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-soft); }
+    .arch-node h3 { font-family: "Source Serif 4", serif; font-size: 25px; line-height: 1.08; margin: 28px 0 12px; }
+    .arch-node p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+    .arrow { display: grid; place-items: center; color: var(--rule-strong); font-size: 26px; }
+    .principle { margin-top: 28px; padding: 18px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); font-family: "IBM Plex Mono", monospace; font-size: clamp(14px, 1.7vw, 18px); }
+
+    .evidence-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .evidence-tabs button {
+      appearance: none;
+      border: 1px solid var(--rule-strong);
+      background: transparent;
+      color: var(--ink);
+      font: 500 12px "IBM Plex Mono", monospace;
+      padding: 9px 12px;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .evidence-tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+    .sleeve-table { border-top: 2px solid var(--ink); }
+    .sleeve-row {
+      display: grid;
+      grid-template-columns: minmax(130px, .7fr) minmax(230px, 1.45fr) minmax(120px, .6fr) minmax(110px, .55fr);
+      gap: 22px;
+      align-items: center;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .sleeve-row.header { padding: 9px 0; color: var(--ink-soft); font: 11px "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: .05em; }
+    .sleeve-name strong { display: block; font-family: "Source Serif 4", serif; font-size: 22px; line-height: 1.1; }
+    .badge { display: inline-block; margin-top: 5px; font: 10px "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: .05em; }
+    .badge.live { color: var(--green); }
+    .badge.zero { color: var(--red); }
+    .sleeve-note { font-size: 13px; color: var(--ink-soft); }
+    .metric-pair { font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+    .metric-pair span { display: block; color: var(--ink-soft); font-size: 10px; text-transform: uppercase; }
+    .weight { font-family: "IBM Plex Mono", monospace; font-size: 20px; text-align: right; }
+    .panel[hidden] { display: none; }
+    .table-note { margin: 13px 0 0; font-size: 12px; color: var(--ink-soft); }
+
+    .decisions { counter-reset: decision; border-top: 2px solid var(--ink); }
+    .decision {
+      counter-increment: decision;
+      display: grid;
+      grid-template-columns: 54px minmax(150px, .55fr) minmax(0, 1.45fr);
+      gap: 18px;
+      padding: 24px 0 28px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .decision::before { content: "0" counter(decision); font: 500 14px "IBM Plex Mono", monospace; color: var(--green); padding-top: 5px; }
+    .decision h3 { margin: 0; font-family: "Source Serif 4", serif; font-size: 25px; line-height: 1.15; }
+    .decision p { margin: 0; color: var(--ink-soft); }
+    .decision strong { color: var(--ink); }
+
+    .verdict-panel {
+      border-top: 4px solid var(--red);
+      background: var(--red-wash);
+      padding: clamp(26px, 4vw, 50px);
+    }
+    .verdict-panel h3 { max-width: 720px; font: 700 clamp(36px, 5vw, 64px)/1 "Source Serif 4", serif; letter-spacing: -.035em; margin: 0 0 20px; }
+    .verdict-panel > p { max-width: 740px; font-size: 18px; }
+    .verdict-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: color-mix(in srgb, var(--red) 40%, transparent); margin: 32px 0; border: 1px solid color-mix(in srgb, var(--red) 40%, transparent); }
+    .vstat { background: var(--paper); padding: 18px; }
+    .vstat strong { display: block; font: 600 clamp(25px, 3vw, 40px)/1 "IBM Plex Mono", monospace; letter-spacing: -.05em; color: var(--red); }
+    .vstat span { display: block; margin-top: 9px; font-size: 12px; color: var(--ink-soft); }
+    .bench-bars { margin-top: 30px; }
+    .bar-row { display: grid; grid-template-columns: 155px minmax(0, 1fr) 64px; gap: 12px; align-items: center; margin: 12px 0; font-size: 13px; }
+    .bar-track { height: 13px; background: color-mix(in srgb, var(--ink) 10%, transparent); position: relative; }
+    .bar-fill { position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--green); }
+    .bar-fill.spy { background: var(--ink); }
+    .bar-value { text-align: right; font-family: "IBM Plex Mono", monospace; }
+    .philosophy { margin: 38px 0 0; padding: 26px 0 0; border-top: 1px solid color-mix(in srgb, var(--red) 50%, transparent); font: 600 clamp(24px, 3vw, 40px)/1.25 "Source Serif 4", serif; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; }
+    .rule-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--ink); }
+    .rule-list li { padding: 16px 0; border-bottom: 1px solid var(--rule); }
+    .rule-list strong { display: block; font-family: "IBM Plex Mono", monospace; font-size: 12px; margin-bottom: 5px; }
+    .rule-list span { color: var(--ink-soft); font-size: 14px; }
+    .formula { display: block; background: var(--code); padding: 17px 18px; font: 13px/1.65 "IBM Plex Mono", monospace; overflow-wrap: anywhere; margin: 22px 0; }
+    .engineering-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 52px; }
+    .codeblock { margin: 0; background: #0c110e; color: #dce8df; border-left: 4px solid #4ca878; padding: 22px; overflow: auto; font: 12px/1.75 "IBM Plex Mono", monospace; white-space: pre-wrap; }
+    .test-count { display: flex; align-items: baseline; gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--rule); }
+    .test-count strong { font: 600 clamp(52px, 7vw, 84px)/1 "IBM Plex Mono", monospace; letter-spacing: -.07em; color: var(--green); }
+    .test-count span { font-size: 14px; color: var(--ink-soft); }
+    .limits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+    .limit { background: var(--paper); padding: 24px; }
+    .limit b { display: block; font-family: "Source Serif 4", serif; font-size: 22px; margin-bottom: 9px; }
+    .limit p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+    .closing { border-bottom: 0; padding-bottom: 26px; }
+    .closing-line { font: 700 clamp(39px, 5.8vw, 78px)/1.02 "Source Serif 4", serif; letter-spacing: -.04em; max-width: 980px; }
+    .footer {
+      padding: 25px clamp(22px, 7vw, 110px) 42px;
+      border-top: 1px solid var(--rule-strong);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 14px;
+      color: var(--ink-soft);
+      font: 11px/1.5 "IBM Plex Mono", monospace;
+    }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 980px) {
+      .mast { min-height: auto; grid-template-columns: 1fr; padding-top: 28px; }
+      .mast-copy, .mast-side { grid-column: 1; }
+      .mast-side { max-width: 560px; }
+      .mast::after { width: 70vw; height: 70vw; }
+      .content-grid { grid-template-columns: 1fr; }
+      .rail { display: none; }
+      .section-head { grid-template-columns: 1fr; }
+      .origin-grid, .engineering-grid { grid-template-columns: 1fr; }
+      .verdict-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 700px) {
+      body { font-size: 15px; }
+      .mast { min-height: 92svh; padding-inline: 20px; gap: 28px; }
+      .mast-meta { font-size: 10px; }
+      h1 { font-size: clamp(48px, 16vw, 72px); }
+      .dek { margin-top: 22px; font-size: 20px; }
+      .mast-foot { align-items: start; }
+      .quote-short { display: none; }
+      .content-grid { padding-inline: 20px; }
+      section { padding: 64px 0 70px; }
+      .section-head { margin-bottom: 32px; }
+      .architecture { grid-template-columns: 1fr; gap: 0; }
+      .arrow { height: 42px; transform: rotate(90deg); }
+      .sleeve-row { grid-template-columns: 1fr auto; gap: 8px 16px; align-items: start; }
+      .sleeve-row.header { display: none; }
+      .sleeve-note { grid-column: 1 / -1; order: 3; }
+      .metric-pair { grid-column: 1; }
+      .weight { grid-column: 2; grid-row: 1; }
+      .decision { grid-template-columns: 38px 1fr; }
+      .decision p { grid-column: 2; }
+      .verdict-panel { margin-inline: -20px; }
+      .verdict-stats { grid-template-columns: 1fr 1fr; }
+      .vstat strong { font-size: 28px; }
+      .bar-row { grid-template-columns: 110px minmax(0, 1fr) 48px; gap: 8px; font-size: 11px; }
+      .two-col, .limits { grid-template-columns: 1fr; }
+      .footer { padding-inline: 20px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    @media print {
+      @page { margin: 14mm; }
+      body { background: white; color: black; font-size: 10pt; }
+      .mast { min-height: auto; padding: 0 0 16mm; break-after: page; }
+      .rail, .scroll-note, .evidence-tabs { display: none !important; }
+      .content-grid { display: block; padding: 0; }
+      section { padding: 12mm 0; break-inside: avoid; }
+      .panel[hidden] { display: block; }
+      .panel[hidden]::before { content: "Large-cap native comparison"; display: block; font-weight: 700; margin: 12px 0; }
+      .mast::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="mast">
+      <div class="mast-meta">
+        <span class="kicker">Borealis / Research dossier</span>
+        <span>Point-in-time equity factor research · Python · 2020–2026</span>
+      </div>
+      <div class="mast-copy">
+        <h1>A factor model with no demonstrated edge.</h1>
+        <p class="snapshot-stamp">Research snapshot — as of 2026-10-05</p>
+      </div>
+      <aside class="mast-side" aria-label="Verdict snapshot">
+        <div class="verdict-label">Verdict run · large-cap native universe</div>
+        <div class="verdict-line">No demonstrable selection edge.</div>
+        <ul class="snapshot">
+          <li><span>Active vs SPY</span><strong>−4.96% / yr</strong></li>
+          <li><span>Information ratio</span><strong>−0.68</strong></li>
+          <li><span>21-day composite IC</span><strong>−0.0023</strong></li>
+          <li><span>IC t-statistic</span><strong>−0.13</strong></li>
+        </ul>
+      </aside>
+      <div class="mast-foot">
+        <span class="scroll-note">Research state · 30 SEP 2026 ↓</span>
+        <p class="quote-short">No factor sleeve cleared significance in the large-cap universe.</p>
+      </div>
+    </header>
+
+    <div class="content-grid">
+      <nav class="rail" aria-label="Dossier sections">
+        <div class="rail-inner">
+          <div class="micro-label rail-title">Contents</div>
+          <ol>
+            <li><a href="#architecture"><span>01</span>Architecture</a></li>
+            <li><a href="#evidence"><span>02</span>Sleeve evidence</a></li>
+            <li><a href="#decisions"><span>03</span>Decisions</a></li>
+            <li><a href="#verdict"><span>04</span>Verdict</a></li>
+            <li><a href="#discipline"><span>05</span>Method</a></li>
+            <li><a href="#engineering"><span>06</span>Engineering</a></li>
+            <li><a href="#limits"><span>07</span>Limitations</a></li>
+          </ol>
+        </div>
+      </nav>
+
+      <main class="main">
+        <section id="architecture">
+          <div class="section-head">
+            <div><div class="section-num">01 / Architecture</div><h2>Research is separate from production ranking.</h2></div>
+            <p class="section-intro">The lab tests factor definitions and applies promotion or rejection rules. The ranking engine uses only the factors and weights already approved.</p>
+          </div>
+          <div class="architecture" aria-label="Borealis architecture">
+            <article class="arch-node primary"><span class="n">01 / TEST</span><h3>Research lab</h3><p>Measures factor efficacy, checks robustness and artifacts, compares universes, and applies promotion or rejection rules.</p></article>
+            <div class="arrow" aria-hidden="true">→</div>
+            <article class="arch-node"><span class="n">02 / APPLY</span><h3>Ranking engine</h3><p>Combines approved signals at predefined weights into a monthly sector-neutral ranking of the investable universe.</p></article>
+            <div class="arrow" aria-hidden="true">→</div>
+            <article class="arch-node"><span class="n">03 / INVESTIGATE</span><h3>Research workflow</h3><p>Uses the ranking to decide which companies to research first. It does not produce buy instructions.</p></article>
+          </div>
+          <div class="principle">LAB → APPROVED FACTORS → FIXED POLICY → MONTHLY ATTENTION FILTER</div>
+        </section>
+
+        <section id="evidence">
+          <div class="section-head">
+            <div><div class="section-num">02 / Sleeve evidence</div><h2>Broad-panel results did not transfer to large caps.</h2></div>
+            <p class="section-intro">Results across 14,887 historical tickers did not hold in the large-cap universe used by the live engine. The native large-cap tests recompute sector z-scores within that universe instead of filtering broad-universe scores afterward.</p>
+          </div>
+          <div class="evidence-tabs" role="tablist" aria-label="Evidence universe">
+            <button id="broad-tab" role="tab" aria-selected="true" aria-controls="broad-panel">Broad panel</button>
+            <button id="large-tab" role="tab" aria-selected="false" aria-controls="large-panel">Large-cap native</button>
+          </div>
+
+          <div class="panel" id="broad-panel" role="tabpanel" aria-labelledby="broad-tab">
+            <div class="sleeve-table">
+              <div class="sleeve-row header"><div>Sleeve</div><div>Research finding</div><div>Evidence</div><div style="text-align:right">Live weight</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Value</strong><span class="badge live">live</span></div><div class="sleeve-note">Earnings yield replaces P/E; the reciprocal preserves economics without exploding near zero earnings.</div><div class="metric-pair">+0.031<span>21d IC · t 2.97</span></div><div class="weight">0.20</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Momentum</strong><span class="badge live">live</span></div><div class="sleeve-note">12–1 trailing return remains the strongest broad-panel spread among active sleeves.</div><div class="metric-pair">+12.4%<span>ann. L/S · SR 1.10</span></div><div class="weight">0.20</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Low volatility</strong><span class="badge live">live</span></div><div class="sleeve-note">126-day realized volatility restored after the beta definition failed.</div><div class="metric-pair">+0.058<span>126d-vol IC · t 2.84</span></div><div class="weight">0.10</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Quality</strong><span class="badge zero">diagnostic</span></div><div class="sleeve-note">Exact eight-metric sleeve validates strongly here—then disappears in large caps.</div><div class="metric-pair">+0.039<span>21d IC · t 5.17</span></div><div class="weight">0.00</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Size</strong><span class="badge zero">diagnostic</span></div><div class="sleeve-note">The apparent result is largely “avoid microcap junk,” not a portable large-cap signal.</div><div class="metric-pair">+11.2%<span>ann. L/S · SR 0.92</span></div><div class="weight">0.00</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Growth</strong><span class="badge zero">falsified belief</span></div><div class="sleeve-note">Widely believed to drive equity returns—that is why its failure stays visible. Tested and rejected: rev_growth IC −0.0017; ebitda_growth t +0.90; ebit_growth t +1.59; none near significance. Scored every run for transparency; no reinstatement path.</div><div class="metric-pair">−0.001<span>21d IC · t −0.13</span></div><div class="weight">0.00</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Noise</strong><span class="badge zero">negative control</span></div><div class="sleeve-note">Seeded Gaussian noise, null by construction. Its IC should hover near zero on every run—if it ever clears |t| &gt; 2, distrust the lab machinery, not the market. Scored every run; never enters the composite.</div><div class="metric-pair">≈ 0<span>expected IC · |t| ≤ 2</span></div><div class="weight">0.00</div></div>
+            </div>
+            <p class="table-note">Broad sleeve results use the 2020–2026 point-in-time panel. L/S statistics are diagnostic only; the production portfolio is long-only.</p>
+          </div>
+
+          <div class="panel" id="large-panel" role="tabpanel" aria-labelledby="large-tab" hidden>
+            <div class="sleeve-table">
+              <div class="sleeve-row header"><div>Sleeve</div><div>Research finding</div><div>Evidence</div><div style="text-align:right">Live weight</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Value</strong><span class="badge live">live</span></div><div class="sleeve-note">Still the clearest survivor, though its 21-day IC is not individually significant.</div><div class="metric-pair">+8.25%<span>ann. L/S · SR 0.75</span></div><div class="weight">0.20</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Momentum</strong><span class="badge live">live</span></div><div class="sleeve-note">Holds, but weakens materially versus the broad panel.</div><div class="metric-pair">+7.25%<span>ann. L/S · SR 0.51</span></div><div class="weight">0.20</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Low volatility</strong><span class="badge live">live</span></div><div class="sleeve-note">The rejected beta version remains negative here; production uses 126-day realized volatility.</div><div class="metric-pair">−7.79%<span>beta L/S · SR −0.35</span></div><div class="weight">0.10</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Quality</strong><span class="badge zero">diagnostic</span></div><div class="sleeve-note">All eight metrics collapse together despite strong coverage. The failure is real, not a data artifact.</div><div class="metric-pair">+0.009<span>21d IC · t 0.87</span></div><div class="weight">0.00</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Size</strong><span class="badge zero">diagnostic</span></div><div class="sleeve-note">Native large-cap scoring reverses the broad-panel spread.</div><div class="metric-pair">−1.38%<span>ann. L/S · SR −0.15</span></div><div class="weight">0.00</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Growth</strong><span class="badge zero">falsified belief</span></div><div class="sleeve-note">Widely believed to drive equity returns—that is why its failure stays visible. Tested and rejected: rev_growth IC −0.0017; ebitda_growth t +0.90; ebit_growth t +1.59; none near significance. Scored every run for transparency; no reinstatement path.</div><div class="metric-pair">−0.007<span>21d IC · t −0.62</span></div><div class="weight">0.00</div></div>
+              <div class="sleeve-row"><div class="sleeve-name"><strong>Noise</strong><span class="badge zero">negative control</span></div><div class="sleeve-note">Seeded Gaussian noise, null by construction. Its IC should hover near zero on every run—if it ever clears |t| &gt; 2, distrust the lab machinery, not the market. Scored every run; never enters the composite.</div><div class="metric-pair">≈ 0<span>expected IC · |t| ≤ 2</span></div><div class="weight">0.00</div></div>
+            </div>
+            <p class="table-note">Native test: top 1,000 securities by enterprise value per date, with z-scores recomputed inside the large-cap universe.</p>
+          </div>
+        </section>
+
+        <section id="decisions">
+          <div class="section-head">
+            <div><div class="section-num">03 / Decision register</div><h2>Five changes were fixed before the final run.</h2></div>
+            <p class="section-intro">The decisions were set on 30 September 2026 and were not changed after the final verdict run began.</p>
+          </div>
+          <div class="decisions">
+            <article class="decision"><h3>Quality → zero</h3><p><strong>The broad result did not transfer to large caps.</strong> The exact eight-metric sleeve produced 21-day IC +0.039 (t 5.17) across the broad panel, but large-cap IC was approximately zero. It remains scored. Reinstatement requires positive trailing-12-month large-cap IC with t &gt; 2, reviewed at least annually—not a single favorable window.</p></article>
+            <article class="decision"><h3>Low-vol → 126d realized vol</h3><p><strong>The beta definition produced negative returns.</strong> The 252-day beta-versus-SPY definition returned −9.4%/yr on the broad panel and −7.8%/yr on large caps. The earlier 126-day realized-volatility definition returned as the 0.10 sleeve; beta stays diagnostic.</p></article>
+            <article class="decision"><h3>Value → earnings yield</h3><p><strong>Earnings yield was more stable and tested better.</strong> Earnings yield (1/P/E) replaces P/E at 0.20 weight. Standalone testing favored earnings yield: IC +0.037 (t 3.93) versus +0.007 (t 0.69) for P/E, while avoiding P/E’s instability near zero earnings.</p></article>
+            <article class="decision"><h3>Size → zero</h3><p><strong>The broad result did not hold under native large-cap scoring.</strong> A +11.2%/yr diagnostic spread became −1.4%/yr when size was scored natively among large caps. The sleeve remains visible with a documented flip-back rule; it no longer affects production rank.</p></article>
+            <article class="decision"><h3>Top quintile → cap-weighted, long-only</h3><p><strong>The short book was not investable under the stated assumptions.</strong> It was concentrated in low-priced small-cap names, including roughly 30% sub-$5 names during the failure window. A flat 10 bps model could not represent borrow. Shorting was cut; Q5 is capitalization-weighted and assessed against SPY with 10 bps one-way transaction costs.</p></article>
+          </div>
+        </section>
+
+        <section id="verdict">
+          <div class="section-head">
+            <div><div class="section-num">04 / Verdict run</div><h2>No factor sleeve cleared significance.</h2></div>
+            <p class="section-intro">The final large-cap native test used the production composite after the decisions were fixed.</p>
+          </div>
+          <div class="verdict-panel">
+            <h3>The large-cap composite showed no edge, 2020–2026.</h3>
+            <p>The cap-weighted top quintile returned 11.11% per year, but SPY returned 16.07%. More importantly, the ranking contributed almost nothing relative to the equal-weight investable universe.</p>
+            <div class="verdict-stats">
+              <div class="vstat"><strong>−4.96%</strong><span>annual active return vs SPY</span></div>
+              <div class="vstat"><strong>−0.68</strong><span>information ratio vs SPY</span></div>
+              <div class="vstat"><strong>−0.0023</strong><span>composite 21-day rank IC</span></div>
+              <div class="vstat"><strong>+0.47%</strong><span>selection edge vs equal-weight universe</span></div>
+            </div>
+            <div class="bench-bars" aria-label="Annual return comparison">
+              <div class="bar-row"><span>SPY</span><div class="bar-track"><div class="bar-fill spy" style="--w:100%"></div></div><span class="bar-value">16.07%</span></div>
+              <div class="bar-row"><span>Equal-weight universe</span><div class="bar-track"><div class="bar-fill" style="--w:73.8%"></div></div><span class="bar-value">11.87%</span></div>
+              <div class="bar-row"><span>Borealis Q5</span><div class="bar-track"><div class="bar-fill" style="--w:69.1%"></div></div><span class="bar-value">11.11%</span></div>
+            </div>
+            <p class="table-note">Annualized, monthly rebalance, 10 bps one-way costs. Q5 is market-cap weighted. The equal-weight comparison’s stored active decomposition implies an approximately 11.87% annual benchmark return.</p>
+            <blockquote class="philosophy">“Edges shouldn’t be easy to find. A process that finds edge everywhere is a process that’s lying.”</blockquote>
+          </div>
+        </section>
+
+        <section id="discipline">
+          <div class="section-head">
+            <div><div class="section-num">05 / Data &amp; method</div><h2>Point-in-time data, fixed rules, and explicit tests.</h2></div>
+            <p class="section-intro">The pipeline checks for look-ahead leakage, missing data, and invalid values before factors are evaluated.</p>
+          </div>
+          <div class="two-col">
+            <div>
+              <h3>Data discipline</h3>
+              <ul class="rule-list">
+                <li><strong>LICENSED INPUTS</strong><span>Intrinio bulk prices, fundamentals and security metadata. Raw licensed files are not distributed.</span></li>
+                <li><strong>~17M PRICE ROWS</strong><span>Historical coverage spans roughly 22,569 tickers; the research panel used 80 monthly trade dates from February 2020 through September 2026.</span></li>
+                <li><strong>PUBLICATION-TIME JOIN</strong><span>Fundamentals enter only once publicly available, using <code>merge_asof</code> on filing or calculable date—not fiscal period end.</span></li>
+                <li><strong>NO SURVIVORSHIP FILTER</strong><span>The broad panel is built from historical vendor records, not today’s index constituents.</span></li>
+              </ul>
+            </div>
+            <div>
+              <h3>Scoring discipline</h3>
+              <ul class="rule-list">
+                <li><strong>WINSORIZE ±3σ</strong><span>Cross-sectional raw metrics are clipped before standardization to reduce outlier leverage.</span></li>
+                <li><strong>SECTOR-NEUTRAL Z-SCORES</strong><span>Signals are standardized within sector so industry structure does not dominate rank.</span></li>
+                <li><strong>QUARANTINE INVALID MULTIPLES</strong><span>Zero or negative P/E, P/S, P/B and EV/EBITDA are never ranked as “cheapest.”</span></li>
+                <li><strong>RENORMALIZE PER TICKER</strong><span>Available sleeve weights are rescaled so missing data does not mechanically depress a company’s composite.</span></li>
+              </ul>
+            </div>
+          </div>
+          <code class="formula">compositeᵢ = Σ(wₛ × zᵢ,ₛ) / Σ(wₛ available for ticker i)</code>
+          <p class="table-note">Current configured weights: value 0.20 · momentum 0.20 · low-volatility (126d) 0.10. Effective fully-observed mix: 0.40 / 0.40 / 0.20.</p>
+        </section>
+
+        <section id="engineering">
+          <div class="section-head">
+            <div><div class="section-num">06 / Engineering</div><h2>The workflow is reproducible and testable.</h2></div>
+            <p class="section-intro">Research decisions remain manual. Definitions, joins, scoring, backtests, and reports are encoded and covered by tests.</p>
+          </div>
+          <div class="engineering-grid">
+            <pre class="codeblock" aria-label="Borealis command examples"># run the suite
+python -m pytest tests/ -q
+
+# score the live universe
+PYTHONPATH=src python scripts/rank.py \
+  --live --asof 2026-09-30 --top 25 \
+  --out data/processed/scores_live_2026-09-30.csv
+
+# configuration
+config/universe.yaml
+config/factors.yaml
+config/backtest.yaml</pre>
+            <div>
+              <div class="test-count"><strong>179</strong><span>passing tests at verdict</span></div>
+              <ul class="rule-list">
+                <li><strong>YAML-CONFIGURED</strong><span>Universe, factor and backtest policy are reviewable outside application code.</span></li>
+                <li><strong>CLI WORKFLOW</strong><span>Ingestion, panel build, factor lab, backtest and ranking are scriptable.</span></li>
+                <li><strong>ERROR HANDLING</strong><span>Schema, date and type failures are surfaced rather than dropped invisibly.</span></li>
+                <li><strong>LAGGED EXECUTION</strong><span>Signals shift before trading; monthly portfolios enter at the next eligible date.</span></li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="limits">
+          <div class="section-head">
+            <div><div class="section-num">07 / Limitations</div><h2>Limits of the result.</h2></div>
+            <p class="section-intro">The negative verdict is specific to the tested data, universe, horizon and implementation. It is not proof that factor investing cannot work.</p>
+          </div>
+          <div class="limits">
+            <article class="limit"><b>In-sample decisions</b><p>Sleeve weights and definitions were chosen after seeing research from the same 2020–2026 window. Promotion requires a genuinely forward test, not another re-cut of this sample.</p></article>
+            <article class="limit"><b>Restated fundamentals</b><p>Filing dates control availability, but vendor fundamentals may reflect later restatements. That can leave residual look-ahead contamination in historical values.</p></article>
+            <article class="limit"><b>One regime window</b><p>February 2020 through September 2026 contains a pandemic crash, speculative rebound and mega-cap-led market. It is not a full market history.</p></article>
+            <article class="limit"><b>Licensed data excluded</b><p>Raw Intrinio bulk files are not included in the repository. Code, configuration and compact result summaries can be reviewed; full reproduction requires licensed inputs.</p></article>
+          </div>
+        </section>
+
+        <section class="closing">
+          <div class="closing-line">The ranking is an attention filter, not a buy list.</div>
+        </section>
+      </main>
+    </div>
+
+    <footer class="footer">
+      <span>Borealis research state · 2026-09-30</span>
+      <span>Point-in-time equity factor pipeline · Research, not investment advice</span>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+      function activate(tab) {
+        tabs.forEach(function (item) {
+          var selected = item === tab;
+          item.setAttribute('aria-selected', selected ? 'true' : 'false');
+          document.getElementById(item.getAttribute('aria-controls')).hidden = !selected;
+        });
+      }
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () { activate(tab); });
+        tab.addEventListener('keydown', function (event) {
+          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+          event.preventDefault();
+          var next = event.key === 'ArrowRight' ? (tabs.indexOf(tab) + 1) % tabs.length : (tabs.indexOf(tab) - 1 + tabs.length) % tabs.length;
+          tabs[next].focus();
+          activate(tabs[next]);
+        });
+      });
+
+      var links = Array.prototype.slice.call(document.querySelectorAll('.rail a'));
+      if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            links.forEach(function (link) {
+              link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+            });
+          });
+        }, { rootMargin: '-20% 0px -65% 0px' });
+        document.querySelectorAll('main section[id]').forEach(function (section) { observer.observe(section); });
+      }
+    }());
+  </script>
+</body>
+</html>
