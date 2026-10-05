@@ -65,5 +65,5 @@ data/processed/  committed result summaries only (CSVs/JSON, kilobytes)
 Market data is **licensed and NOT included**. Reproducing the panel needs
 your own vendor data (Intrinio US bulk: prices + fundamentals + metadata;
 see `scripts/fetch_intrinio_bulk.py`). Bulk zips are gitignored; the
-manifest records the refresh. The workbook path (`scripts/rank.py --input`)
-works with any export in the same 17-column sector-block layout.
+manifest records the refresh. The CSV-input path (`scripts/rank.py --input`)
+works with any export in the documented 17-column sector-block layout.

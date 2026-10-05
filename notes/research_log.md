@@ -1,6 +1,5 @@
 # Borealis research log
 
-The log that closes the loop: lab → engine → workflow → back to the lab.
 The ranking orders attention; this file records what the attention found.
 
 ## The monthly routine
