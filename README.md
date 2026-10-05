@@ -2,13 +2,12 @@
 
 Borealis is a point-in-time equity factor research pipeline. It tests whether
 common equity factors — value, momentum, quality, size, low volatility —
-actually predict returns on large-cap US stocks, and publishes the answer
-either way.
+predict returns on large-cap US stocks.
 
 **Headline finding:** on 2020–2026 large caps, a long-only top-quintile factor
 portfolio trails SPY by roughly 5%/yr after realistic costs (IR −0.68). The
-ranking adds about nothing over an equal-weight large-cap portfolio. That is
-the output of this project: an honest negative, not a flattering backtest.
+ranking adds about nothing over an equal-weight large-cap portfolio.
+The result was negative.
 
 It is a research project, not investment advice.
 
