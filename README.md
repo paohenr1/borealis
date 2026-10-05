@@ -24,7 +24,7 @@ It is a research project, not investment advice.
 5. **Factor lab** — efficacy checks on every factor: rank IC, quintile
    spreads, turnover, regime conditioning.
 
-163 passing tests. Every result reproducible from the scripts.
+179 passing tests. Every result reproducible from the scripts.
 
 ## Current status (2026-09-30)
 
